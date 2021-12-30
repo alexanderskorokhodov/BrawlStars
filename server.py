@@ -19,9 +19,26 @@ def log_in(sock, id):
         else:
             return False
 
+    def registration(login, password, nickname):
+        con = sqlite3.connect("BrawlStars.db")
+        cur = con.cursor()
+        result = cur.execute(f"""SELECT login FROM passwords WHERE login = '{login}'""").fetchall()
+        if result:
+            con.close()
+            return False
+        else:
+            cur.execute(
+                f"""INSERT INTO passwords(login, password) VALUES('{login}', '{password}')""")
+            cur.execute(f"""INSERT INTO players(login, nickname) VALUES('{login}', '{nickname}')""")
+            con.commit()
+            con.close()
+            return True
+
     try:
         print('connected with ' + str(id))
-        if sock.recv(4).decode() == CMD_TRY_TO_ACCESS:
+        mes = sock.recv(4).decode()
+        # log command
+        if mes == CMD_TO_LOG_IN:
             data = sock.recv(25).decode()
             try:
                 login, password = data.split(Delimiter)
@@ -30,6 +47,18 @@ def log_in(sock, id):
                     sock.sendall(CMD_RIGHT_PASSWORD.encode())
                 else:
                     sock.sendall(CMD_WRONG_PASSWORD.encode())
+            except ValueError:
+                sock.close()
+        # registration command
+        elif mes == CMD_TO_REGISTRATION:
+            data = sock.recv(38).decode()
+            try:
+                login, password, nickname = data.split(Delimiter)
+                print(login, password, nickname)
+                if registration(login, password, nickname):
+                    sock.sendall(CMD_SUCCESSFUL_REGISTRATION.encode())
+                else:
+                    sock.sendall(CMD_FAIL_REGISTRATION.encode())
             except ValueError:
                 sock.close()
         else:
