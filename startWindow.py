@@ -227,7 +227,7 @@ def main():
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
                     else:
-                        text_error = FONT.render('Server Error', 1, (255, 0, 0))
+                        text_error = FONT.render('Invalid login or password', 1, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, 1, (255, 0, 0))
             if reg_button.is_over(pg.mouse.get_pos()):
@@ -267,7 +267,7 @@ def main():
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
                     else:
-                        text_error = FONT.render('Server Error', 1, (255, 0, 0))
+                        text_error = FONT.render('This login already exists', 1, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, 1, (255, 0, 0))
             if back_button.is_over(pg.mouse.get_pos()):
