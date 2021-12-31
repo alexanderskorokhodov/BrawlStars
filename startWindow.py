@@ -158,7 +158,7 @@ def main():
                 running = False
         screen.fill((0, 0, 255))
         all_sprites.draw(screen)
-        length_of_loading += 5
+        length_of_loading += 10
         loading = rect(screen, "black", (100, 600, length_of_loading, 50), width=0, border_radius=25)
         pg.display.flip()
         clock.tick(fps)
