@@ -5,6 +5,8 @@ import sys
 import pygame as pg
 from pygame.draw import rect
 
+from commands import *  # commands
+
 pg.init()
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
@@ -171,8 +173,7 @@ def main():
         if length_of_loading == 400:
             print('Подключено к {} порт {}'.format(*server_address))
         if length_of_loading == 500:
-            pass
-            # sock.connect(server_address)
+            sock.connect(server_address)
         if length_of_loading >= width - 200:
             running = False
     # login
@@ -222,9 +223,14 @@ def main():
             if continue_button.is_over(pg.mouse.get_pos()):
                 check, mes = check_log_data()
                 if check:
-                    login, password, nick = get_data()
-                    done = True
+                    login, password = get_data()[:-1]
                     text_error = FONT.render("", 1, (255, 0, 0))
+                    sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
+                    message = sock.recv(...).decode()
+                    if message == CMD_RIGHT_PASSWORD:
+                        done = True
+                    else:
+                        text_error = FONT.render('Server Error', 1, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, 1, (255, 0, 0))
             if reg_button.is_over(pg.mouse.get_pos()):
@@ -257,8 +263,13 @@ def main():
                 check, mes = check_reg_data()
                 if check:
                     login, password, nick = get_data()
-                    done = True
                     text_error = FONT.render("", 1, (255, 0, 0))
+                    sock.sendall((CMD_TO_REGISTRATION + login + Delimiter + password + Delimiter + nick).encode())
+                    message = sock.recv(...).decode()
+                    if message == CMD_SUCCESSFUL_REGISTRATION:
+                        done = True
+                    else:
+                        text_error = FONT.render('Server Error', 1, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, 1, (255, 0, 0))
             if back_button.is_over(pg.mouse.get_pos()):
