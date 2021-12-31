@@ -1,4 +1,3 @@
-import startWindow, loginWindow
+import startWindow
 
 startWindow.main()
-loginWindow.main()
