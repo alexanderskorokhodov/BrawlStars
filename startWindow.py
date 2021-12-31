@@ -12,6 +12,7 @@ COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 FONT = pg.font.SysFont('arial', 18)
 size = width, height = 1500, 700
+fps = 60
 screen = pg.display.set_mode(size)
 ev: pg.event
 input_boxes: list
@@ -144,7 +145,8 @@ def load_image(name, color_key=None):
 
 
 def main():
-    # создадим группу, содержащую все спрайты
+
+    # screensaver
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image("login1.jpg")
@@ -154,7 +156,6 @@ def main():
     # добавим спрайт в группу
     all_sprites.add(background)
     running = True
-    fps = 60
     clock = pg.time.Clock()
     while running:
         for event in pg.event.get():
@@ -176,6 +177,7 @@ def main():
             sock.connect(server_address)
         if length_of_loading >= width - 200:
             running = False
+
     # login
     global input_boxes
 
@@ -226,7 +228,7 @@ def main():
                     login, password = get_data()[:-1]
                     text_error = FONT.render("", 1, (255, 0, 0))
                     sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
-                    message = sock.recv(...).decode()
+                    message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
                     else:
@@ -265,7 +267,7 @@ def main():
                     login, password, nick = get_data()
                     text_error = FONT.render("", 1, (255, 0, 0))
                     sock.sendall((CMD_TO_REGISTRATION + login + Delimiter + password + Delimiter + nick).encode())
-                    message = sock.recv(...).decode()
+                    message = sock.recv(max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
                     else:
