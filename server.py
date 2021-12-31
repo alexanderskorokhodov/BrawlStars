@@ -36,33 +36,46 @@ def log_in(sock, id):
 
     try:
         print('connected with ' + str(id))
-        mes = sock.recv(4).decode()
-        # log command
-        if mes == CMD_TO_LOG_IN:
-            data = sock.recv(25).decode()
-            try:
-                login, password = data.split(Delimiter)
-                print(login, password)
-                if check_password(login, password):
-                    sock.sendall(CMD_RIGHT_PASSWORD.encode())
-                else:
-                    sock.sendall(CMD_WRONG_PASSWORD.encode())
-            except ValueError:
+        successful_authorization = False
+        while not successful_authorization:
+            mes = sock.recv(4).decode()
+            # log command
+            if mes == CMD_TO_LOG_IN:
+                data = sock.recv(25).decode()
+                try:
+                    login, password = data.split(Delimiter)
+                    print(login, password)
+                    if check_password(login, password):
+                        sock.sendall(CMD_RIGHT_PASSWORD.encode())
+                        successful_authorization = True
+                        break
+                    else:
+                        sock.sendall(CMD_WRONG_PASSWORD.encode())
+                except ValueError:
+                    sock.close()
+                    break
+            # registration command
+            elif mes == CMD_TO_REGISTRATION:
+                data = sock.recv(38).decode()
+                try:
+                    login, password, nickname = data.split(Delimiter)
+                    print(login, password, nickname)
+                    if registration(login, password, nickname):
+                        sock.sendall(CMD_SUCCESSFUL_REGISTRATION.encode())
+                        successful_authorization = True
+                        break
+                    else:
+                        sock.sendall(CMD_FAIL_REGISTRATION.encode())
+                except ValueError:
+                    sock.close()
+                    break
+            else:
                 sock.close()
-        # registration command
-        elif mes == CMD_TO_REGISTRATION:
-            data = sock.recv(38).decode()
-            try:
-                login, password, nickname = data.split(Delimiter)
-                print(login, password, nickname)
-                if registration(login, password, nickname):
-                    sock.sendall(CMD_SUCCESSFUL_REGISTRATION.encode())
-                else:
-                    sock.sendall(CMD_FAIL_REGISTRATION.encode())
-            except ValueError:
-                sock.close()
-        else:
-            sock.close()
+                break
+
+        if successful_authorization:
+            pass
+            # next game logic
     except ConnectionError:
         sock.close()
 
