@@ -246,6 +246,7 @@ def main():
             screen.fill((30, 30, 30))
             for box in input_boxes:
                 box.draw(screen)
+
             continue_button.draw(screen)
             back_button.draw(screen)
             screen.blit(text_password, (600, 200, 300, 32))
