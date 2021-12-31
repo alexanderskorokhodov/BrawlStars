@@ -79,20 +79,15 @@ class InputBox:
             self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
         if event.type == pg.KEYDOWN:
             if self.active:
-                if event.key == pg.K_RETURN:
-                    print(self.text)
-                    self.text = ''
-                elif event.key == pg.K_BACKSPACE:
+                if event.key == pg.K_BACKSPACE:
                     self.text = self.text[:-1]
-                else:
+                elif len(self.text) < 12:
                     self.text += event.unicode
                 # Re-render the text.
                 self.txt_surface = FONT.render(self.text, True, self.color)
 
     def update(self):
-        # Resize the box if the text is too long.
-        w = max(self.rect.w, self.txt_surface.get_width() + 10)
-        self.rect.w = w
+        pass
 
     def draw(self, scr):
         # Blit the text.
