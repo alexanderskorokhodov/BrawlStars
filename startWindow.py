@@ -12,6 +12,7 @@ COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 FONT = pg.font.SysFont('arial', 18)
 size = width, height = 1500, 700
+clock = pg.time.Clock()
 fps = 60
 screen = pg.display.set_mode(size)
 ev: pg.event
@@ -37,12 +38,11 @@ class Button:
 
         if self.text != '':
             font = FONT
-            text = font.render(self.text, 1, (0, 0, 0))
+            text = font.render(self.text, True, (0, 0, 0))
             win.blit(text, (
                 self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
     def is_over(self, pos):
-        global STATE
         # Pos is the mouse position or a tuple of (x,y) coordinates
         if self.x < pos[0] < self.x + self.width:
             if self.y < pos[1] < self.y + self.height:
@@ -139,49 +139,65 @@ def load_image(name, color_key=None):
     return image
 
 
-def main():
-
-    # screensaver
+def start():
+    sock = False
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image("login1.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     length_of_loading = 100
-    loading = rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
-    # добавим спрайт в группу
+    rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
     all_sprites.add(background)
     running = True
-    clock = pg.time.Clock()
+    velocity = 50
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
         screen.fill((0, 0, 255))
         all_sprites.draw(screen)
-        length_of_loading += 10
-        loading = rect(screen, "black", (100, 600, length_of_loading, 50), width=0, border_radius=25)
+        length_of_loading += velocity
+        rect(screen, "black", (100, 600, length_of_loading, 50), width=0, border_radius=25)
         pg.display.flip()
         clock.tick(fps)
-        if length_of_loading == 200:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        if length_of_loading == 300:
-            server_address = (socket.gethostbyname(socket.gethostname()), 10000)
-        if length_of_loading == 400:
-            print('Подключено к {} порт {}'.format(*server_address))
-        if length_of_loading == 500:
-            sock.connect(server_address)
         if length_of_loading >= width - 200:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_address = (socket.gethostbyname(socket.gethostname()), 10000)
+            print('Подключено к {} порт {}'.format(*server_address))
+            sock.connect(server_address)
             running = False
+    return sock
 
-    # login
+
+def server_error_window():
+    running = True
+    try_button = Button(600, 300, 300, 32, text='Try again')
+    text_server_error = FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
+    while running:
+        global ev
+        ev = pg.event.get()
+        for event in ev:
+            if event.type == pg.QUIT:
+                return False
+        screen.fill((30, 30, 30))
+        try_button.draw(screen)
+        screen.blit(text_server_error, (625, 400, 300, 32))
+        pg.display.flip()
+        if try_button.is_over(pg.mouse.get_pos()):
+            running = False
+        clock.tick(fps)
+    return True
+
+
+def login_reg_window(sock):
     global input_boxes
 
-    text_reg = FONT.render("Registration", 1, COLOR_INACTIVE)
-    text_login = FONT.render("Login:", 1, COLOR_INACTIVE)
-    text_password = FONT.render("Password:", 1, COLOR_INACTIVE)
-    text_nick = FONT.render("Nick:", 1, COLOR_INACTIVE)
+    text_reg = FONT.render("Registration", True, COLOR_INACTIVE)
+    text_login = FONT.render("Login:", True, COLOR_INACTIVE)
+    text_password = FONT.render("Password:", True, COLOR_INACTIVE)
+    text_nick = FONT.render("Nick:", True, COLOR_INACTIVE)
 
-    text_error = FONT.render("", 1, (255, 0, 0))
+    text_error = FONT.render("", True, (255, 0, 0))
     input_box1 = InputBox(600, 150, 300, 32)
     input_box2 = InputBox(600, 250, 300, 32)
     input_box3 = InputBox(600, 350, 300, 32)
@@ -221,18 +237,18 @@ def main():
                 check, mes = check_log_data()
                 if check:
                     login, password = get_data()[:-1]
-                    text_error = FONT.render("", 1, (255, 0, 0))
+                    text_error = FONT.render("", True, (255, 0, 0))
                     sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
                     message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
                     else:
-                        text_error = FONT.render('Invalid login or password', 1, (255, 0, 0))
+                        text_error = FONT.render('Invalid login or password', True, (255, 0, 0))
                 else:
-                    text_error = FONT.render(mes, 1, (255, 0, 0))
+                    text_error = FONT.render(mes, True, (255, 0, 0))
             if reg_button.is_over(pg.mouse.get_pos()):
                 window = 'REG'
-                text_error = FONT.render("", 1, (255, 0, 0))
+                text_error = FONT.render("", True, (255, 0, 0))
         else:
             for event in ev:
                 if event.type == pg.QUIT:
@@ -261,19 +277,36 @@ def main():
                 check, mes = check_reg_data()
                 if check:
                     login, password, nick = get_data()
-                    text_error = FONT.render("", 1, (255, 0, 0))
+                    text_error = FONT.render("", True, (255, 0, 0))
                     sock.sendall((CMD_TO_REGISTRATION + login + Delimiter + password + Delimiter + nick).encode())
                     message = sock.recv(max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
                     else:
-                        text_error = FONT.render('This login already exists', 1, (255, 0, 0))
+                        text_error = FONT.render('This login already exists', True, (255, 0, 0))
                 else:
-                    text_error = FONT.render(mes, 1, (255, 0, 0))
+                    text_error = FONT.render(mes, True, (255, 0, 0))
             if back_button.is_over(pg.mouse.get_pos()):
                 window = 'LOG'
-                text_error = FONT.render("", 1, (255, 0, 0))
+                text_error = FONT.render("", True, (255, 0, 0))
         clock.tick(fps)
+
+
+def main():
+    # start screen
+    while 1:
+        try:
+            sock = start()
+            if sock:
+                break
+            else:
+                raise
+        except:
+            print('Не удалось подключиться к серверу')
+            if not server_error_window():
+                quit()
+    # login screen
+    login_reg_window(sock)
 
 
 if __name__ == '__main__':
