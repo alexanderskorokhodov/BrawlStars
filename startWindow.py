@@ -50,3 +50,7 @@ def main():
         clock.tick(fps)
         if length_of_loading >= width - 200:
             running = False
+
+
+if __name__ == '__main__':
+    main()

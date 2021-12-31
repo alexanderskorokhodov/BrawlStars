@@ -149,6 +149,8 @@ def main():
                 text_error = FONT.render("", 1, (255, 0, 0))
             else:
                 text_error = FONT.render("Check input data", 1, (255, 0, 0))
-
         clock.tick(30)
 
+
+if __name__ == '__main__':
+    main()
