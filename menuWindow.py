@@ -142,7 +142,7 @@ def server_error_window():
         ev = pg.event.get()
         for event in ev:
             if event.type == pg.QUIT:
-                return False
+                quit()
         screen.fill((30, 30, 30))
         all_sprites.draw(screen)
         try_button.draw(screen)
@@ -157,7 +157,7 @@ def server_error_window():
 def brawlers_menu(user_data):
     running = True
     brawlers_stats = user_data['brawlers']
-    brawlers = sorted(brawlers_stats.keys())
+    brawlers = list(sorted(brawlers_stats.keys()))
     current_id = 0
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
@@ -169,8 +169,10 @@ def brawlers_menu(user_data):
     power_text = POWER_FONT.render(
         f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
         pg.Color("BLACK"))
-    left_button = Button(20, 300, 50, 50, text='<', r=20)
-    right_button = Button(500, 300, 50, 50, text='>', r=20)
+    left_button = Button(100, 300, 50, 50, text='<', r=20)
+    right_button = Button(600, 300, 50, 50, text='>', r=20)
+    cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
+    select_button = Button(1000, 630, 400, 50, text='Select', r=20)
     while running:
         global ev
         ev = pg.event.get()
@@ -185,19 +187,24 @@ def brawlers_menu(user_data):
         power_text = POWER_FONT.render(
             f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
             pg.Color("BLACK"))
+        cups_button.text = 'Cups: ' + str(brawlers_stats[brawlers[current_id]][0])
         screen.blit(brawler_name, (1000, 100, 300, 64))
         back_button.draw(screen, outline=pg.Color("BLACK"))
+        cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
+        select_button.draw(screen, outline=pg.Color("BLACK"))
         if back_button.is_over(pg.mouse.get_pos()):
             return None
         if right_button.is_over(pg.mouse.get_pos()):
             current_id += 1
         if left_button.is_over(pg.mouse.get_pos()):
             current_id -= 1
+        if select_button.is_over(pg.mouse.get_pos()):
+            return brawlers[current_id]
         current_id = current_id % len(brawlers)
         pg.display.flip()
         clock.tick(fps)
-    return True
+    return None
 
 
 def main(sock):
@@ -210,6 +217,8 @@ def main(sock):
     trophy.image = pygame.transform.scale(load_image("trophy.png", (0, 0, 0)), (64, 64))
     trophy.rect = trophy.image.get_rect()
     trophy.rect.x, trophy.rect.y = 350, 20
+    brawler = pg.sprite.Sprite()
+
     fg_sprites = pg.sprite.Group()
     fg_sprites.add(trophy)
     bg_sprites.add(background)
@@ -217,15 +226,20 @@ def main(sock):
     trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
     money_button = Button(1000, 20, 200, 64, text=f'', r=20)
     brawlers_menu_button = Button(20, 500, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
-    try:
-        user_data = get_player_info(sock)
-        user_button.text = user_data['nickname']
-        trophies_button.text = '    ' + str(user_data['all_cups'])
-        money_button.text = str(user_data['money']) + '$'
-        print(user_data['brawlers'])
-    except:
-        server_error_window()
+    user_data = get_player_info(sock)
+    user_button.text = user_data['nickname']
+    trophies_button.text = '    ' + str(user_data['all_cups'])
+    money_button.text = str(user_data['money']) + '$'
+    print(list(user_data['brawlers'].keys()))
+    current_brawler = list(user_data['brawlers'].keys())[0]
+    brawler.image = pg.transform.scale(load_image(f"{current_brawler.lower()}.png", color_key=-1), (240, 430))
+    brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
+    brawler.rect.x, brawler.rect.y = 600, 100
+    fg_sprites.add(brawler)
     while running:
+        brawler.image = pg.transform.scale(load_image(f"{current_brawler.lower()}.png", color_key=-1), (240, 430))
+        brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
+        brawler.rect.x, brawler.rect.y = 600, 100
         global ev
         ev = pg.event.get()
         for event in ev:
@@ -240,7 +254,9 @@ def main(sock):
         fg_sprites.draw(screen)
         pg.display.flip()
         if brawlers_menu_button.is_over(pg.mouse.get_pos()):
-            res = brawlers_menu(user_data)
+            chosen_brawler = brawlers_menu(user_data)
+            if chosen_brawler:
+                current_brawler = chosen_brawler
         clock.tick(fps)
 
 
