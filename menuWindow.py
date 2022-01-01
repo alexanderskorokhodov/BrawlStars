@@ -237,7 +237,7 @@ def main(sock):
     user_button = Button(20, 20, 300, 64, text=f'username', r=20)
     trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
     money_button = Button(1000, 20, 200, 64, text=f'', r=20)
-    brawlers_menu_button = Button(20, 500, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
+    brawlers_menu_button = Button(20, 250, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
     user_data = get_player_info(sock)
     user_button.text = user_data['nickname']
     trophies_button.text = '    ' + str(user_data['all_cups'])
@@ -248,6 +248,12 @@ def main(sock):
     brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
     fg_sprites.add(brawler)
+    event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"))
+    event_img = pg.sprite.Sprite()
+    event_img.image = pygame.transform.scale(load_image("showdown.png"), (100, 100))
+    event_img.rect = event_img.image.get_rect()
+    event_img.rect.x, event_img.rect.y = 500, 580
+    fg_sprites.add(event_img)
     while running:
         brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
@@ -262,6 +268,7 @@ def main(sock):
         trophies_button.draw(screen, outline=pg.Color("BLACK"))
         money_button.draw(screen, outline=pg.Color("BLACK"))
         brawlers_menu_button.draw(screen, outline=pg.Color("Black"))
+        event_button.draw(screen, outline=pg.Color("Black"))
         fg_sprites.draw(screen)
         pg.display.flip()
         if brawlers_menu_button.is_over(pg.mouse.get_pos()):
