@@ -1,4 +1,5 @@
-import startWindow, menuWindow
+import menuWindow
+import startWindow
 
-startWindow.main()
-menuWindow.main()
+if startWindow.main():
+    menuWindow.main()

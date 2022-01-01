@@ -15,7 +15,7 @@ ev: pg.event
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_ACTIVE):
+    def __init__(self, x, y, w, h, text='', color=COLOR_ACTIVE, r=0):
         self.color = color
         self.og_col = color
         self.x = x
@@ -23,13 +23,15 @@ class Button:
         self.width = w
         self.height = h
         self.text = text
+        self.radius = r
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
         if outline:
-            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0)
+            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0,
+                         border_radius=self.radius)
 
-        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0)
+        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
 
         if self.text != '':
             font = FONT
@@ -109,7 +111,7 @@ def load_image(name, color_key=None):
 
 def server_error_window():
     running = True
-    try_button = Button(600, 300, 300, 32, text='Try again')
+    try_button = Button(600, 300, 300, 32, text='Try again', r=16)
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image(f"serverError1.jpg")
@@ -158,7 +160,6 @@ def main():
         all_sprites.draw(screen)
         pg.display.flip()
         clock.tick(fps)
-
 
 
 if __name__ == '__main__':

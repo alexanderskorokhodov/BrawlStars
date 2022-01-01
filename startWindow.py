@@ -2,6 +2,7 @@ import os.path
 import socket
 import sys
 from random import randint
+
 import pygame as pg
 from pygame.draw import rect
 
@@ -20,7 +21,7 @@ input_boxes: list
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_ACTIVE):
+    def __init__(self, x, y, w, h, text='', color=COLOR_ACTIVE, r=0):
         self.color = color
         self.og_col = color
         self.x = x
@@ -28,13 +29,15 @@ class Button:
         self.width = w
         self.height = h
         self.text = text
+        self.radius = r
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
         if outline:
-            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0)
+            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0,
+                         border_radius=self.radius)
 
-        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0)
+        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
 
         if self.text != '':
             font = FONT
@@ -143,7 +146,7 @@ def start():
     sock = False
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
-    background.image = load_image(f"login{randint(1, 4)}.jpg")
+    background.image = load_image(f"login{randint(1, 3)}.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     length_of_loading = 100
     rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
@@ -171,7 +174,7 @@ def start():
 
 def server_error_window():
     running = True
-    try_button = Button(600, 300, 300, 32, text='Try again')
+    try_button = Button(600, 300, 300, 32, text='Try again', r=16)
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image(f"serverError1.jpg")
@@ -208,9 +211,9 @@ def login_reg_window(sock):
     input_box2 = InputBox(600, 250, 300, 32)
     input_box3 = InputBox(600, 350, 300, 32)
     input_boxes = [input_box1, input_box2, input_box3]
-    continue_button = Button(600, 450, 300, 32, text='Continue')
-    reg_button = Button(600, 550, 300, 32, text='Registration')
-    back_button = Button(600, 550, 300, 32, text='Back')
+    continue_button = Button(600, 450, 300, 32, text='Continue', r=16)
+    reg_button = Button(600, 550, 300, 32, text='Registration', r=16)
+    back_button = Button(600, 550, 300, 32, text='Back', r=16)
     done = False
 
     window = 'LOG'
@@ -248,6 +251,7 @@ def login_reg_window(sock):
                     message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
+                        return True
                     else:
                         text_error = FONT.render('Invalid login or password', True, (255, 0, 0))
                 else:
@@ -288,6 +292,7 @@ def login_reg_window(sock):
                     message = sock.recv(max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
+                        return True
                     else:
                         text_error = FONT.render('This login already exists', True, (255, 0, 0))
                 else:
@@ -312,7 +317,9 @@ def main():
             if not server_error_window():
                 quit()
     # login screen
-    login_reg_window(sock)
+    if login_reg_window(sock):
+        return True
+    return False
 
 
 if __name__ == '__main__':
