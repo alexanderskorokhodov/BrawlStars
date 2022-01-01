@@ -23,9 +23,9 @@ pg.display.set_caption('Brawl Stars', 'Brawl Stars')
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 COLOR_DEFAULT = pg.Color(102, 102, 190)
-FONT = pg.font.SysFont('arial', 36)
-BRAWLER_FONT = pg.font.SysFont('arial', 70, bold=True)
-POWER_FONT = pg.font.SysFont('arial', 40)
+MAIN_FONT = pg.font.Font('./data/mainFont.ttf', 36)
+BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 70)
+POWER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
 fps = 60
@@ -34,7 +34,7 @@ ev: pg.event
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0):
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pg.Color("Black"), bold=False):
         self.color = color
         self.og_col = color
         self.x = x
@@ -43,6 +43,8 @@ class Button:
         self.height = h
         self.text = text
         self.radius = r
+        self.textColor = text_color
+        self.bold = bold
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -52,8 +54,8 @@ class Button:
         pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
 
         if self.text != '':
-            font = FONT
-            text = font.render(self.text, True, (0, 0, 0))
+            font = MAIN_FONT
+            text = font.render(self.text, self.bold, self.textColor)
             win.blit(text, (
                 self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
 
@@ -79,7 +81,7 @@ class InputBox:
         self.rect = pg.Rect(x, y, w, h)
         self.color = COLOR_INACTIVE
         self.text = text
-        self.txt_surface = FONT.render(text, True, self.color)
+        self.txt_surface = MAIN_FONT.render(text, True, self.color)
         self.active = False
 
     def handle_event(self, event):
@@ -99,7 +101,7 @@ class InputBox:
                 elif len(self.text) < 12:
                     self.text += event.unicode
                 # Re-render the text.
-                self.txt_surface = FONT.render(self.text, True, self.color)
+                self.txt_surface = MAIN_FONT.render(self.text, True, self.color)
 
     def update(self):
         pass
@@ -135,7 +137,7 @@ def server_error_window():
     background.image = load_image(f"serverError1.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     all_sprites.add(background)
-    text_server_error = FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
+    text_server_error = MAIN_FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
     while running:
         global ev
         ev = pg.event.get()
@@ -215,8 +217,10 @@ def brawlers_menu(user_data):
         clock.tick(fps)
     return None
 
+
 def play():
     pass
+
 
 def main(sock):
     running = True
@@ -236,9 +240,10 @@ def main(sock):
     coin.rect.x, coin.rect.y = 1000, 20
     fg_sprites.add(coin)
     bg_sprites.add(background)
-    user_button = Button(20, 20, 300, 64, text=f'username', r=20)
-    trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
-    money_button = Button(1000, 20, 200, 64, text=f'', r=20)
+    user_button = Button(20, 20, 300, 64, text=f'username', r=20, bold=True)
+    trophies_button = Button(350, 20, 200, 64, text=f'', r=20, bold=True)
+    money_button = Button(1000, 20, 200, 64, text=f'', r=20, text_color=pg.Color("WHITE"), color=pg.Color("Black"),
+                          bold=True)
     brawlers_menu_button = Button(20, 250, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
     user_data = get_player_info(sock)
     user_button.text = user_data['nickname']
@@ -250,13 +255,13 @@ def main(sock):
     brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
     fg_sprites.add(brawler)
-    event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"))
+    event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"), bold=True)
     event_img = pg.sprite.Sprite()
     event_img.image = pygame.transform.scale(load_image("showdown.png"), (100, 100))
     event_img.rect = event_img.image.get_rect()
     event_img.rect.x, event_img.rect.y = 500, 580
     fg_sprites.add(event_img)
-    play_button = Button(1050, 580, 400, 100, text='Start', r=20, color=pg.Color("Yellow"))
+    play_button = Button(1050, 580, 400, 100, text='Start', r=20, color=pg.Color("Yellow"), bold=True)
     while running:
         brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
