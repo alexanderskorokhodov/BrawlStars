@@ -215,6 +215,8 @@ def brawlers_menu(user_data):
         clock.tick(fps)
     return None
 
+def play():
+    pass
 
 def main(sock):
     running = True
@@ -254,6 +256,7 @@ def main(sock):
     event_img.rect = event_img.image.get_rect()
     event_img.rect.x, event_img.rect.y = 500, 580
     fg_sprites.add(event_img)
+    play_button = Button(1050, 580, 400, 100, text='Start', r=20, color=pg.Color("Yellow"))
     while running:
         brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
@@ -267,6 +270,7 @@ def main(sock):
         user_button.draw(screen, outline=pg.Color("BLACK"))
         trophies_button.draw(screen, outline=pg.Color("BLACK"))
         money_button.draw(screen, outline=pg.Color("BLACK"))
+        play_button.draw(screen, outline=pg.Color('BLACK'))
         brawlers_menu_button.draw(screen, outline=pg.Color("Black"))
         event_button.draw(screen, outline=pg.Color("Black"))
         fg_sprites.draw(screen)
@@ -275,7 +279,8 @@ def main(sock):
             chosen_brawler = brawlers_menu(user_data)
             if chosen_brawler:
                 current_brawler = chosen_brawler
-
+        if play_button.is_over(pg.mouse.get_pos()):
+            play()
         clock.tick(fps)
 
 
