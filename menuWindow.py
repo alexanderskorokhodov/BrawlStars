@@ -174,9 +174,9 @@ def brawlers_menu(user_data):
     cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
     select_button = Button(1000, 630, 400, 50, text='Select', r=20)
     brawler = pg.sprite.Sprite()
-    brawler.image = pg.transform.scale(load_image(f"{brawlers[current_id]}.png", color_key=-1), (240, 430))
-    brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
-    brawler.rect.x, brawler.rect.y = 600, 100
+    brawler.image = pg.transform.scale(load_image(f"brawlers/{brawlers[current_id]}.png"), (400, 400))
+    brawler.rect = brawler.image.get_rect()
+    brawler.rect.x, brawler.rect.y = 175, 100
     fg = pg.sprite.Group()
     fg.add(brawler)
     while running:
@@ -199,9 +199,9 @@ def brawlers_menu(user_data):
         cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
         select_button.draw(screen, outline=pg.Color("BLACK"))
-        brawler.image = pg.transform.scale(load_image(f"{brawlers[current_id]}.png", color_key=-1), (240, 430))
+        brawler.image = pg.transform.scale(load_image(f"brawlers/{brawlers[current_id]}.png"), (400, 400))
         brawler.rect = brawler.image.get_rect()
-        brawler.rect.x, brawler.rect.y = 250, 100
+        brawler.rect.x, brawler.rect.y = 175, 100
         fg.draw(screen)
         if back_button.is_over(pg.mouse.get_pos()):
             return None
@@ -224,7 +224,7 @@ def main(sock):
     background.image = load_image("menu.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     trophy = pg.sprite.Sprite()
-    trophy.image = pygame.transform.scale(load_image("trophy.png", (0, 0, 0)), (64, 64))
+    trophy.image = pygame.transform.scale(load_image("trophy.png"), (64, 64))
     trophy.rect = trophy.image.get_rect()
     trophy.rect.x, trophy.rect.y = 350, 20
     brawler = pg.sprite.Sprite()
@@ -242,14 +242,12 @@ def main(sock):
     money_button.text = str(user_data['money']) + '$'
     print(list(user_data['brawlers'].keys()))
     current_brawler = list(user_data['brawlers'].keys())[0]
-    brawler.image = pg.transform.scale(load_image(f"{current_brawler.lower()}.png", color_key=-1), (240, 430))
+    brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
-    brawler.rect.x, brawler.rect.y = 600, 100
     fg_sprites.add(brawler)
     while running:
-        brawler.image = pg.transform.scale(load_image(f"{current_brawler.lower()}.png", color_key=-1), (240, 430))
+        brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
-        brawler.rect.x, brawler.rect.y = 600, 100
         global ev
         ev = pg.event.get()
         for event in ev:

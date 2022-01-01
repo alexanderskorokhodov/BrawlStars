@@ -1,4 +1,5 @@
 import os.path
+import random
 import socket
 import sys
 from random import randint
@@ -149,7 +150,8 @@ def start():
     sock = False
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
-    background.image = pg.transform.scale(load_image(f"login{randint(1, 16)}.jpg"), (width, height))
+    screens = os.listdir('./data/loginScreens')
+    background.image = pg.transform.scale(load_image(f"loginScreens/{random.choice(screens)}"), (width, height))
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     length_of_loading = 100
     rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
