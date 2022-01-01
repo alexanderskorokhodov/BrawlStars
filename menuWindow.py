@@ -1,8 +1,22 @@
 import os.path
 import sys
+from json import loads
 
 import pygame as pg
 import pygame.transform
+
+from commands import *  # commands
+
+
+def get_player_info(sock):
+    message = sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
+    if message == CMD_PLAYER_INFO_IN_MENU:
+        data = sock.recv(32).decode()
+        while data[-1] != Delimiter:
+            data += sock.recv(32).decode()
+        info = loads(data[:-1])
+        return info
+
 
 pg.init()
 COLOR_INACTIVE = pg.Color('lightskyblue3')
@@ -141,7 +155,7 @@ def get_user_data():
     return {'nick': 'sanya', 'login': 'sanya', 'password': 'sanya', 'trophies': 666, 'gems': 1000}
 
 
-def main():
+def main(sock):
     running = True
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
@@ -157,9 +171,9 @@ def main():
     user_button = Button(20, 20, 150, 32, text=f'username', r=16)
     trophies_button = Button(200, 20, 100, 32, text=f'', r=10)
     try:
-        user_data = get_user_data()
-        user_button.text = user_data['nick']
-        trophies_button.text = '    ' + str(user_data['trophies'])
+        user_data = get_player_info(sock)
+        user_button.text = user_data['nickname']
+        trophies_button.text = '    ' + str(user_data['all_cups'])
     except:
         server_error_window()
     while running:
@@ -178,4 +192,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(None)

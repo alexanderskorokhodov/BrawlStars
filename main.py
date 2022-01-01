@@ -1,5 +1,6 @@
 import menuWindow
 import startWindow
 
-if startWindow.main():
-    menuWindow.main()
+res, sock = startWindow.main()
+if res:
+    menuWindow.main(sock)

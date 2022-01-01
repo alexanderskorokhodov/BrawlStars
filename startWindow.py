@@ -318,8 +318,8 @@ def main():
                 quit()
     # login screen
     if login_reg_window(sock):
-        return True
-    return False
+        return True, sock
+    return False, None
 
 
 if __name__ == '__main__':
