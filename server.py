@@ -2,6 +2,7 @@ import socket
 from commands import *  # commands
 from threading import Thread
 import sqlite3
+from json import dumps
 
 
 def log_in(sock, id):
@@ -11,7 +12,6 @@ def log_in(sock, id):
         cur = con.cursor()
         result = cur.execute(f"""SELECT password FROM passwords WHERE login = '{login}'""").fetchone()
         con.close()
-        print(result)
         if result is None:
             return False
         elif result[0] == password:
@@ -44,7 +44,6 @@ def log_in(sock, id):
                 data = sock.recv(25).decode()
                 try:
                     login, password = data.split(Delimiter)
-                    print(login, password)
                     if check_password(login, password):
                         sock.sendall(CMD_RIGHT_PASSWORD.encode())
                         successful_authorization = True
@@ -59,7 +58,6 @@ def log_in(sock, id):
                 data = sock.recv(38).decode()
                 try:
                     login, password, nickname = data.split(Delimiter)
-                    print(login, password, nickname)
                     if registration(login, password, nickname):
                         sock.sendall(CMD_SUCCESSFUL_REGISTRATION.encode())
                         successful_authorization = True
@@ -74,10 +72,27 @@ def log_in(sock, id):
                 break
 
         if successful_authorization:
-            pass
-            # next game logic
+            menu(sock, id, login)
     except ConnectionError:
         sock.close()
+
+
+def menu(sock, id, login):
+
+    def player_info(login):
+        info = {}
+        con = sqlite3.connect("BrawlStars.db")
+        cur = con.cursor()
+        for item in ('nickname', 'money', 'all_cups'):
+            info[item] = cur.execute(f"""SELECT {item} FROM players WHERE login = '{login}'""").fetchone()[0]
+        info['brawlers'] = {}
+        for i in cur.execute(f"""SELECT brawler_id FROM players_brawlers WHERE login = '{login}'""").fetchall():
+            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT cups, power, power_points FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
+        con.close()
+        return info
+
+    print(dumps(player_info(login)))
+    sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info(login)) + Delimiter).encode())
 
 
 if __name__ == '__main__':
