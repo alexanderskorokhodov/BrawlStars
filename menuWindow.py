@@ -173,6 +173,12 @@ def brawlers_menu(user_data):
     right_button = Button(600, 300, 50, 50, text='>', r=20)
     cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
     select_button = Button(1000, 630, 400, 50, text='Select', r=20)
+    brawler = pg.sprite.Sprite()
+    brawler.image = pg.transform.scale(load_image(f"{brawlers[current_id]}.png", color_key=-1), (240, 430))
+    brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
+    brawler.rect.x, brawler.rect.y = 600, 100
+    fg = pg.sprite.Group()
+    fg.add(brawler)
     while running:
         global ev
         ev = pg.event.get()
@@ -193,6 +199,10 @@ def brawlers_menu(user_data):
         cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
         select_button.draw(screen, outline=pg.Color("BLACK"))
+        brawler.image = pg.transform.scale(load_image(f"{brawlers[current_id]}.png", color_key=-1), (240, 430))
+        brawler.rect = brawler.image.get_rect()
+        brawler.rect.x, brawler.rect.y = 250, 100
+        fg.draw(screen)
         if back_button.is_over(pg.mouse.get_pos()):
             return None
         if right_button.is_over(pg.mouse.get_pos()):
