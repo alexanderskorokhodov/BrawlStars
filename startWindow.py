@@ -1,7 +1,7 @@
 import os.path
 import socket
 import sys
-
+from random import randint
 import pygame as pg
 from pygame.draw import rect
 
@@ -143,7 +143,7 @@ def start():
     sock = False
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
-    background.image = load_image("login1.jpg")
+    background.image = load_image(f"login{randint(1, 4)}.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     length_of_loading = 100
     rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
@@ -172,6 +172,11 @@ def start():
 def server_error_window():
     running = True
     try_button = Button(600, 300, 300, 32, text='Try again')
+    all_sprites = pg.sprite.Group()
+    background = pg.sprite.Sprite()
+    background.image = load_image(f"serverError1.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    all_sprites.add(background)
     text_server_error = FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
     while running:
         global ev
@@ -180,6 +185,7 @@ def server_error_window():
             if event.type == pg.QUIT:
                 return False
         screen.fill((30, 30, 30))
+        all_sprites.draw(screen)
         try_button.draw(screen)
         screen.blit(text_server_error, (625, 400, 300, 32))
         pg.display.flip()
