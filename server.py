@@ -79,7 +79,7 @@ def log_in(sock, id):
 
 def menu(sock, id, login):
 
-    def player_info(login):
+    def get_player_info(login):
         info = {}
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
@@ -91,8 +91,9 @@ def menu(sock, id, login):
         con.close()
         return info
 
-    print(dumps(player_info(login)))
-    sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info(login)) + Delimiter).encode())
+    player_info = get_player_info(login)
+    print(dumps(player_info))
+    sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
 
 
 if __name__ == '__main__':

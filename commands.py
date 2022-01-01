@@ -7,3 +7,4 @@ CMD_WRONG_PASSWORD = 'paswrng'
 CMD_SUCCESSFUL_REGISTRATION = 'regcorr'
 CMD_FAIL_REGISTRATION = 'regwrng'
 CMD_PLAYER_INFO_IN_MENU = 'meninf' + Delimiter
+CMD_FIND_MATCH = 'm' + Delimiter
