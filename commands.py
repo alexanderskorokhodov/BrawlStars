@@ -6,3 +6,4 @@ CMD_RIGHT_PASSWORD = 'pascorr'
 CMD_WRONG_PASSWORD = 'paswrng'
 CMD_SUCCESSFUL_REGISTRATION = 'regcorr'
 CMD_FAIL_REGISTRATION = 'regwrng'
+CMD_PLAYER_INFO_IN_MENU = 'meninf' + Delimiter
