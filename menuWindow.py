@@ -2,10 +2,12 @@ import os.path
 import sys
 
 import pygame as pg
+import pygame.transform
 
 pg.init()
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
+COLOR_DEFAULT = pg.Color(102, 102, 190)
 FONT = pg.font.SysFont('arial', 18)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
@@ -15,7 +17,7 @@ ev: pg.event
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_ACTIVE, r=0):
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0):
         self.color = color
         self.og_col = color
         self.x = x
@@ -111,7 +113,7 @@ def load_image(name, color_key=None):
 
 def server_error_window():
     running = True
-    try_button = Button(600, 300, 300, 32, text='Try again', r=16)
+    try_button = Button(600, 300, 300, 32, text='Try again', color=COLOR_DEFAULT, r=16)
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image(f"serverError1.jpg")
@@ -136,18 +138,28 @@ def server_error_window():
 
 
 def get_user_data():
-    return {'nick': 'sanya', 'login': 'sanya', 'password': 'sanya', 'trophies': 66666, 'gems': 1000}
+    return {'nick': 'sanya', 'login': 'sanya', 'password': 'sanya', 'trophies': 666, 'gems': 1000}
 
 
 def main():
     running = True
-    all_sprites = pg.sprite.Group()
+    bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image("menu.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
-    all_sprites.add(background)
+    trophy = pg.sprite.Sprite()
+    trophy.image = pygame.transform.scale(load_image("trophy.png", (0, 0, 0)), (32, 32))
+    trophy.rect = trophy.image.get_rect()
+    trophy.rect.x, trophy.rect.y = 200, 20
+    fg_sprites = pg.sprite.Group()
+    fg_sprites.add(trophy)
+    bg_sprites.add(background)
+    user_button = Button(20, 20, 150, 32, text=f'username', r=16)
+    trophies_button = Button(200, 20, 100, 32, text=f'', r=10)
     try:
         user_data = get_user_data()
+        user_button.text = user_data['nick']
+        trophies_button.text = '    ' + str(user_data['trophies'])
     except:
         server_error_window()
     while running:
@@ -157,7 +169,10 @@ def main():
             if event.type == pg.QUIT:
                 return False
         screen.fill((30, 30, 30))
-        all_sprites.draw(screen)
+        bg_sprites.draw(screen)
+        user_button.draw(screen, outline=pg.Color("BLACK"))
+        trophies_button.draw(screen, outline=pg.Color("BLACK"))
+        fg_sprites.draw(screen)
         pg.display.flip()
         clock.tick(fps)
 
