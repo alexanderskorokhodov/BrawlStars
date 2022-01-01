@@ -22,7 +22,7 @@ pg.init()
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 COLOR_DEFAULT = pg.Color(102, 102, 190)
-FONT = pg.font.SysFont('arial', 18)
+FONT = pg.font.SysFont('arial', 36)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
 fps = 60
@@ -162,18 +162,20 @@ def main(sock):
     background.image = load_image("menu.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     trophy = pg.sprite.Sprite()
-    trophy.image = pygame.transform.scale(load_image("trophy.png", (0, 0, 0)), (32, 32))
+    trophy.image = pygame.transform.scale(load_image("trophy.png", (0, 0, 0)), (64, 64))
     trophy.rect = trophy.image.get_rect()
-    trophy.rect.x, trophy.rect.y = 200, 20
+    trophy.rect.x, trophy.rect.y = 350, 20
     fg_sprites = pg.sprite.Group()
     fg_sprites.add(trophy)
     bg_sprites.add(background)
-    user_button = Button(20, 20, 150, 32, text=f'username', r=16)
-    trophies_button = Button(200, 20, 100, 32, text=f'', r=10)
+    user_button = Button(20, 20, 300, 64, text=f'username', r=20)
+    trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
+    money_button = Button(1000, 20, 200, 64, text=f'', r=20)
     try:
         user_data = get_player_info(sock)
         user_button.text = user_data['nickname']
         trophies_button.text = '    ' + str(user_data['all_cups'])
+        money_button.text =  str(user_data['money']) + '$'
     except:
         server_error_window()
     while running:
@@ -186,6 +188,7 @@ def main(sock):
         bg_sprites.draw(screen)
         user_button.draw(screen, outline=pg.Color("BLACK"))
         trophies_button.draw(screen, outline=pg.Color("BLACK"))
+        money_button.draw(screen, outline=pg.Color("BLACK"))
         fg_sprites.draw(screen)
         pg.display.flip()
         clock.tick(fps)
