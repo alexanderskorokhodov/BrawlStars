@@ -47,9 +47,8 @@ class Button:
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
         if outline:
-            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0,
+            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
                          border_radius=self.radius)
-
         pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
 
         if self.text != '':
@@ -62,7 +61,7 @@ class Button:
         # Pos is the mouse position or a tuple of (x,y) coordinates
         if self.x < pos[0] < self.x + self.width:
             if self.y < pos[1] < self.y + self.height:
-                self.color = (128, 128, 128)
+                self.color = (255, 245, 238)
             else:
                 self.color = self.og_col
         else:
@@ -223,14 +222,17 @@ def main(sock):
     background = pg.sprite.Sprite()
     background.image = load_image("menu.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    fg_sprites = pg.sprite.Group()
     trophy = pg.sprite.Sprite()
     trophy.image = pygame.transform.scale(load_image("trophy.png"), (64, 64))
     trophy.rect = trophy.image.get_rect()
     trophy.rect.x, trophy.rect.y = 350, 20
-    brawler = pg.sprite.Sprite()
-
-    fg_sprites = pg.sprite.Group()
     fg_sprites.add(trophy)
+    coin = pg.sprite.Sprite()
+    coin.image = pygame.transform.scale(load_image("coin.png"), (64, 64))
+    coin.rect = coin.image.get_rect()
+    coin.rect.x, coin.rect.y = 1000, 20
+    fg_sprites.add(coin)
     bg_sprites.add(background)
     user_button = Button(20, 20, 300, 64, text=f'username', r=20)
     trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
@@ -239,9 +241,10 @@ def main(sock):
     user_data = get_player_info(sock)
     user_button.text = user_data['nickname']
     trophies_button.text = '    ' + str(user_data['all_cups'])
-    money_button.text = str(user_data['money']) + '$'
+    money_button.text = '      ' + str(user_data['money'])
     print(list(user_data['brawlers'].keys()))
     current_brawler = list(user_data['brawlers'].keys())[0]
+    brawler = pg.sprite.Sprite()
     brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
     fg_sprites.add(brawler)
@@ -265,6 +268,7 @@ def main(sock):
             chosen_brawler = brawlers_menu(user_data)
             if chosen_brawler:
                 current_brawler = chosen_brawler
+
         clock.tick(fps)
 
 
