@@ -19,6 +19,7 @@ def get_player_info(sock):
 
 
 pg.init()
+pg.display.set_caption('Brawl Stars', 'Brawl Stars')
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 COLOR_DEFAULT = pg.Color(102, 102, 190)

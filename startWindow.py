@@ -8,7 +8,26 @@ from pygame.draw import rect
 
 from commands import *  # commands
 
+
+def load_image(name, color_key=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pg.image.load(fullname)
+    if color_key is not None:
+        image = image.convert()
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
 pg.init()
+pg.display.set_caption('Brawl Stars', 'Brawl Stars')
+pg.display.set_icon(load_image('icon.png'))
 COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 FONT = pg.font.SysFont('arial', 18)
@@ -124,22 +143,6 @@ def check_log_data():
     if not 12 >= len(data[1]) > 0:
         return False, 'Length of password must be between 1 and 12'
     return True, ''
-
-
-def load_image(name, color_key=None):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    image = pg.image.load(fullname)
-    if color_key is not None:
-        image = image.convert()
-        if color_key == -1:
-            color_key = image.get_at((0, 0))
-        image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
-    return image
 
 
 def start():
