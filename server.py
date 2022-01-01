@@ -87,7 +87,7 @@ def menu(sock, id, login):
             info[item] = cur.execute(f"""SELECT {item} FROM players WHERE login = '{login}'""").fetchone()[0]
         info['brawlers'] = {}
         for i in cur.execute(f"""SELECT brawler_id FROM players_brawlers WHERE login = '{login}'""").fetchall():
-            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT cups, power, power_points FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
+            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT brawler_id, cups, power, power_points FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
         con.close()
         return info
 
