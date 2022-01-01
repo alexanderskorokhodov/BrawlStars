@@ -24,6 +24,8 @@ COLOR_INACTIVE = pg.Color('lightskyblue3')
 COLOR_ACTIVE = pg.Color('dodgerblue2')
 COLOR_DEFAULT = pg.Color(102, 102, 190)
 FONT = pg.font.SysFont('arial', 36)
+BRAWLER_FONT = pg.font.SysFont('arial', 70, bold=True)
+POWER_FONT = pg.font.SysFont('arial', 40)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
 fps = 60
@@ -128,7 +130,7 @@ def load_image(name, color_key=None):
 
 def server_error_window():
     running = True
-    try_button = Button(600, 300, 300, 32, text='Try again', color=COLOR_DEFAULT, r=16)
+    try_button = Button(600, 300, 300, 64, text='Try again', color=COLOR_DEFAULT, r=16)
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image(f"serverError1.jpg")
@@ -144,7 +146,7 @@ def server_error_window():
         screen.fill((30, 30, 30))
         all_sprites.draw(screen)
         try_button.draw(screen)
-        screen.blit(text_server_error, (625, 400, 300, 32))
+        screen.blit(text_server_error, (500, 400, 300, 32))
         pg.display.flip()
         if try_button.is_over(pg.mouse.get_pos()):
             running = False
@@ -152,8 +154,50 @@ def server_error_window():
     return True
 
 
-def get_user_data():
-    return {'nick': 'sanya', 'login': 'sanya', 'password': 'sanya', 'trophies': 666, 'gems': 1000}
+def brawlers_menu(user_data):
+    running = True
+    brawlers_stats = user_data['brawlers']
+    brawlers = sorted(brawlers_stats.keys())
+    current_id = 0
+    bg_sprites = pg.sprite.Group()
+    background = pg.sprite.Sprite()
+    background.image = load_image("menu.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    back_button = Button(20, 20, 300, 64, text=f'< back', r=20)
+    bg_sprites.add(background)
+    brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.title(), True, pg.Color("BLACK"))
+    power_text = POWER_FONT.render(
+        f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
+        pg.Color("BLACK"))
+    left_button = Button(20, 300, 50, 50, text='<', r=20)
+    right_button = Button(500, 300, 50, 50, text='>', r=20)
+    while running:
+        global ev
+        ev = pg.event.get()
+        for event in ev:
+            if event.type == pg.QUIT:
+                quit()
+        screen.fill((30, 30, 30))
+        bg_sprites.draw(screen)
+        right_button.draw(screen, outline=pg.Color("BLACK"))
+        left_button.draw(screen, outline=pg.Color("BLACK"))
+        brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.title(), True, pg.Color("BLACK"))
+        power_text = POWER_FONT.render(
+            f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
+            pg.Color("BLACK"))
+        screen.blit(brawler_name, (1000, 100, 300, 64))
+        back_button.draw(screen, outline=pg.Color("BLACK"))
+        screen.blit(power_text, (1000, 200, 300, 64))
+        if back_button.is_over(pg.mouse.get_pos()):
+            return None
+        if right_button.is_over(pg.mouse.get_pos()):
+            current_id += 1
+        if left_button.is_over(pg.mouse.get_pos()):
+            current_id -= 1
+        current_id = current_id % len(brawlers)
+        pg.display.flip()
+        clock.tick(fps)
+    return True
 
 
 def main(sock):
@@ -172,11 +216,13 @@ def main(sock):
     user_button = Button(20, 20, 300, 64, text=f'username', r=20)
     trophies_button = Button(350, 20, 200, 64, text=f'', r=20)
     money_button = Button(1000, 20, 200, 64, text=f'', r=20)
+    brawlers_menu_button = Button(20, 500, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
     try:
         user_data = get_player_info(sock)
         user_button.text = user_data['nickname']
         trophies_button.text = '    ' + str(user_data['all_cups'])
-        money_button.text =  str(user_data['money']) + '$'
+        money_button.text = str(user_data['money']) + '$'
+        print(user_data['brawlers'])
     except:
         server_error_window()
     while running:
@@ -190,8 +236,11 @@ def main(sock):
         user_button.draw(screen, outline=pg.Color("BLACK"))
         trophies_button.draw(screen, outline=pg.Color("BLACK"))
         money_button.draw(screen, outline=pg.Color("BLACK"))
+        brawlers_menu_button.draw(screen, outline=pg.Color("Black"))
         fg_sprites.draw(screen)
         pg.display.flip()
+        if brawlers_menu_button.is_over(pg.mouse.get_pos()):
+            res = brawlers_menu(user_data)
         clock.tick(fps)
 
 
