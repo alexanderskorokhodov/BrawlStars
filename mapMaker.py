@@ -12,21 +12,21 @@ def color_(color):
     return a.index(min(a))
 
 
-blocks = 62
-im = '/Users/alexanderskorokhodov/Downloads/map1.png'
+blocks = int(1000/16.6)
+im = '/Users/alexanderskorokhodov/Downloads/%3F%3F%3F%3F%3F%3F%3F%3F%3F_%3F_%3F%3F%3F%3F%3F%3F%3F%3F.png'
 map_ = Image.open(im)
-map_.show()
+#map_.show()
 # map_ = map_.resize((blocks + 2, blocks + 2))
 # map_ = map_.crop((1, 1, blocks + 1, blocks + 1))
 # map_ = ImageEnhance.Contrast(image=map_).enhance(1.2)
-size = 25
+size = 16.6
 new_map = Image.new("RGB", (blocks, blocks))
 map_ = Image.open(im)
 pixels = map_.load()
 for i in range(blocks):
     for j in range(blocks):
-        lx = i * size + size
-        ur = j * size + size
+        lx = int(i * size)
+        ur = int(j * size)
         # COLOR = (0, 0, 0)
         # for X in range(25):
         #     for Y in range(10):
@@ -52,11 +52,11 @@ for j in range(blocks):
     for i in range(blocks):
         id__ = color_(pixels[i, j])
         if id__ in [1]:
-            new_map1.putpixel((i, j), (92, 59, 0))
-            res += '#'
-        elif id__ in [2, 3, 4]:
             new_map1.putpixel((i, j), (180, 135, 100))
             res += '.'
+        elif id__ in [2, 3, 4]:
+            new_map1.putpixel((i, j), (92, 59, 0))
+            res += '#'
         elif id__ in [0, 5]:
             new_map1.putpixel((i, j), (255, 255, 0))
             res += 'X'
@@ -64,6 +64,7 @@ for j in range(blocks):
             new_map1.putpixel((i, j), (66, 170, 255))
             res += '-'
     res += '\n'
-with open(file='data/maps/map1.txt', mode='w') as file:
+new_map1.show()
+with open(file='data/maps/map3.txt', mode='w') as file:
     file.write(res)
 
