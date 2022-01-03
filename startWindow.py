@@ -158,6 +158,8 @@ def start():
     all_sprites.add(background)
     running = True
     velocity = 10
+    pg.mixer.music.load('data/tones/now-loading.mp3')
+    pg.mixer.music.play()
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -174,6 +176,7 @@ def start():
             print('Подключено к {} порт {}'.format(*server_address))
             sock.connect(server_address)
             running = False
+    pg.mixer.music.stop()
     return sock
 
 

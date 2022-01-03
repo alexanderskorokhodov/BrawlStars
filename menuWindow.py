@@ -34,7 +34,8 @@ ev: pg.event
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pg.Color("Black"), bold=False):
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pg.Color("Black"), bold=False,
+                 sound='data/tones/menu_click_08.mp3'):
         self.color = color
         self.og_col = color
         self.x = x
@@ -45,6 +46,7 @@ class Button:
         self.radius = r
         self.textColor = text_color
         self.bold = bold
+        self.sound = pygame.mixer.Sound(sound)
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -73,6 +75,7 @@ class Button:
             if event.type == pg.MOUSEBUTTONDOWN:
                 if self.x < pos[0] < self.x + self.width:
                     if self.y < pos[1] < self.y + self.height:
+                        self.sound.play()
                         return True
 
 
@@ -173,7 +176,7 @@ def brawlers_menu(user_data):
     left_button = Button(100, 300, 50, 50, text='<', r=20)
     right_button = Button(600, 300, 50, 50, text='>', r=20)
     cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
-    select_button = Button(1000, 630, 400, 50, text='Select', r=20)
+    select_button = Button(1000, 630, 400, 50, text='Select', r=20, sound='data/tones/select_brawler_01.mp3')
     brawler = pg.sprite.Sprite()
     brawler.image = pg.transform.scale(load_image(f"brawlers/{brawlers[current_id]}.png"), (400, 400))
     brawler.rect = brawler.image.get_rect()
@@ -262,6 +265,8 @@ def main(sock):
     event_img.rect.x, event_img.rect.y = 500, 580
     fg_sprites.add(event_img)
     play_button = Button(1050, 580, 400, 100, text='Start', r=20, color=pg.Color("Yellow"), bold=True)
+    pg.mixer.music.load('data/tones/main-menu-2.mp3')
+    pg.mixer.music.play(-1)
     while running:
         brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
