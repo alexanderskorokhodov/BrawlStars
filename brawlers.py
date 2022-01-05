@@ -1,0 +1,73 @@
+import os
+import sys
+from math import pi, acos, sqrt
+
+import pygame
+
+
+def load_image(name, color_key=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if color_key is not None:
+        image = image.convert()
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+class Brawler(pygame.sprite.Sprite):
+    def __init__(self, x_, y_, name, health):
+        super().__init__()
+        self.image = pygame.transform.scale(load_image(f"brawlers/gaming{name}.png"), (50, 50))
+        self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = x_, y_
+        self.angle = 0
+        self.is_shoot = False
+        self.is_super = False
+        self.max_health = health
+        self.current_health = health
+
+    def update(self, x_shoot, y_shoot, x, y, mouse_buttons, velocity):
+        self.update_angle(x_shoot, y_shoot, x, y)
+        # super().update()
+        _x = 0
+        _y = 0
+        if pygame.key.get_pressed()[pygame.K_d]:
+            _x += 1
+        if pygame.key.get_pressed()[pygame.K_a]:
+            _x -= 1
+        if pygame.key.get_pressed()[pygame.K_w]:
+            _y -= 1
+        if pygame.key.get_pressed()[pygame.K_s]:
+            _y += 1
+        if mouse_buttons[0]:
+            self.is_shoot = True
+        else:
+            self.is_shoot = False
+        _x, _y = self.move(_x * velocity, _y * velocity)
+        # self.rect.move_ip(_x, _y)
+        return _x, _y
+
+    def move(self, _x, _y):
+        # fix
+        return _x, _y
+
+    def update_angle(self, x_shoot, y_shoot, x, y):
+        hip = sqrt((x_shoot - x) ** 2 + (y_shoot - y) ** 2)
+        if hip:
+            _cos = (x - x_shoot) / hip
+            _sin = (y - y_shoot) / hip
+            self.angle = acos(_cos) if _sin > 0 else 2 * pi - acos(_cos)
+        else:
+            self.angle = 0
+
+
+class Shelly(Brawler):
+    def __init__(self, x, y):
+        super().__init__(x, y, 'Shelly', 3600)
