@@ -67,7 +67,7 @@ class Board:
 
 n = {1: 'X', 2: '.', 3: '#', 4: 'S', 5: 'P', 6: 'C', 7: '-'}
 m = {'X': 1, '.': 2, '#': 3, 'S': 4, 'P': 5, 'C': 6, '-': 7}
-map_ = open("data/maps/map2.txt", 'r').readlines()
+map_ = open("data/maps/DriedUpRiver.txt", 'r').readlines()
 map_ = list(map(lambda x: list(map(lambda y: m[y], list(x.rstrip()))), map_))
 print(map_)
 board = Board(len(map_), len(map_), map_)
@@ -93,5 +93,5 @@ for i in range(len(map_)):
     for j in range(len(map_)):
         res += n[map_[i][j]]
     res += '\n'
-with open(file='data/maps/map2.txt', mode='w') as file:
+with open(file='data/maps/DriedUpRiver.txt', mode='w') as file:
     file.write(res)

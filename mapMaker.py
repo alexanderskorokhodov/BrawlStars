@@ -65,6 +65,6 @@ for j in range(blocks):
             res += '-'
     res += '\n'
 new_map1.show()
-with open(file='data/maps/map3.txt', mode='w') as file:
+with open(file='data/maps/RockwallBrawl.txt', mode='w') as file:
     file.write(res)
 
