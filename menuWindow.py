@@ -1,6 +1,5 @@
 import os.path
 import sys
-import time
 from json import loads
 
 import pygame as pg
@@ -90,14 +89,24 @@ class ChooseBrawlerButton:
         brawler.image = pg.transform.scale(self.img, (self.height - 16, int((self.height - 16) / 6 * 5)))
         brawler.rect = brawler.image.get_rect()
         brawler.rect.x, brawler.rect.y = self.x, self.y + 32
+        trophy = pg.sprite.Sprite()
+        trophy.image = pg.transform.scale(load_image("trophy.png"), (32, 32))
+        trophy.rect = trophy.image.get_rect()
+        trophy.rect.x, trophy.rect.y = self.x + self.width // 2 - 35, self.y
         pg.draw.rect(win, (86, 3, 25), (self.x, self.y, self.width, 32), 0)
+        pg.draw.rect(win, (86, 3, 25), (self.x, self.y + int((self.height - 16) / 6 * 5) + 32, self.width, 32), 0)
+        if self.cups >= 1250:
+            pg.draw.rect(win, (226, 136, 0), (self.x, self.y, self.width, 32), 0)
+        else:
+            pg.draw.rect(win, (226, 136, 0), (self.x, self.y, int(self.width * max(self.cups - ranks[self.rank - 1][1], 0) / (ranks[self.rank][1] - ranks[self.rank-1][1])), 32), 0)
         brawler_group.add(brawler)
         fg.add(rank_img)
+        fg.add(trophy)
         brawler_group.draw(win)
         pg.draw.rect(win, 'BLACK', (self.x, self.y + 32, self.width, int((self.height - 16) / 6 * 5)), 4)
         fg.draw(win)
         if self.text != '':
-            draw_outline(self.x, self.y + (self.height / 2) + 50, self.text.upper().replace('_', ' '), win,
+            draw_outline(self.x, self.y + (self.height / 2) + 70, self.text.upper().replace('_', ' '), win,
                          CHOOSE_BRAWLER_FONT)
         draw_outline(self.x + self.width // 2, self.y - 3, str(self.cups), win, CUPS_FONT)
 
