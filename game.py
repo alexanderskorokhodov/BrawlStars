@@ -14,8 +14,14 @@ tile_images = {
     'water': 'maps/tiles/river.png',
     'chest': 'maps/tiles/chest.png'
 }
-tile_decode = {'X': 'bushes', '.': 'ground', '#': 'wall', 'S': 'skeleton', 'P': 'ground', 'C': 'chest', '-': 'water'}
-BRAWLERS = {'shelly': Shelly}
+tile_decode = {'X': 'bushes',
+               '.': 'ground',
+               '#': 'wall',
+               'S': 'skeleton',
+               'P': 'ground',
+               'C': 'chest',
+               '-': 'water'}
+BRAWLERS = {'shelly': Shelly, 'colt': Colt, 'bull': Bull}
 FPS = 50
 
 
@@ -63,12 +69,10 @@ class Camera:
         self.tlt = top_left_tile
         self.brt = bottom_right_tile
 
-    # сдвинуть объект obj на смещение камеры
     def apply(self, obj, _x, _y):
         obj.rect.x -= _x
         obj.rect.y -= _y
 
-    # позиционировать камеру на объекте target
     def update(self, target):
         self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
         self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
@@ -111,7 +115,7 @@ def main():
     pygame.init()
     x_shoot, y_shoot = width - 150, height - 150
     screen = pygame.display.set_mode(size)
-    field = Map('RockWallBrawl')
+    field = Map('DriedUpRiver')
     tiles_group, top_left_tile, bottom_right_tile = field.make_tiles_group()
     brawler_name = get_brawler()
     cords = get_cords()
@@ -151,7 +155,6 @@ def main():
         elif 0 <= player.rect.y + _y <= height - player.rect.height:
             player.rect.move_ip(0, _y)
         player_group.draw(screen)
-        print(player.rect.x, player.rect.y)
         pygame.draw.circle(screen, pygame.Color("RED"), (x_shoot, y_shoot), 50, width=1)
         pygame.draw.circle(screen, pygame.Color("WHITE"), (player.rect.x + 25, player.rect.y + 25), 30, width=2)
         if 2500 >= (x_shoot - x) ** 2 + (y_shoot - y) ** 2:
