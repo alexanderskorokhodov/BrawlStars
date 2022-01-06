@@ -253,7 +253,7 @@ def brawler_menu(user_data, chosen_brawler):
     background = pg.sprite.Sprite()
     background.image = load_image("menu.jpg")
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
-    back_button = Button(20, 20, 300, 64, text=f'< back', r=20)
+    back_button = Button(20, 20, 300, 64, text=f'< BACK', r=20)
     bg_sprites.add(background)
     brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.title(), True, pg.Color("BLACK"))
     power_text = POWER_FONT.render(
@@ -281,6 +281,7 @@ def brawler_menu(user_data, chosen_brawler):
             pg.Color("BLACK"))
         cups_button.text = 'Cups: ' + str(brawlers_stats[brawlers[current_id]][0])
         screen.blit(brawler_name, (1000, 100, 300, 64))
+        bg_sprites.draw(screen)
         back_button.draw(screen, outline=pg.Color("BLACK"))
         cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
@@ -305,12 +306,18 @@ def brawlers_menu(user_data):
     running = True
     all_b = []
     for i, br in enumerate(user_data['brawlers']):
-        br = ChooseBrawlerButton(10 + i % 4 * 350, 15 + 350 * (i // 4), 300, 300, user_data, brawler_name=br)
+        br = ChooseBrawlerButton(250 + i % 3 * 350, 80 + 325 * (i // 3), 300, 300, user_data, brawler_name=br)
         all_b.append(br)
         if i == len(user_data['brawlers']) - 1:
             down_border = br
         if i == 0:
             up_border = br
+    bg_sprites = pg.sprite.Group()
+    background = pg.sprite.Sprite()
+    background.image = load_image("menu.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    back_button = Button(20, 20, 150, 64, text=f'< BACK', r=20)
+    bg_sprites.add(background)
     while running:
         ev = pg.event.get()
         for event in ev:
@@ -322,13 +329,16 @@ def brawlers_menu(user_data):
                         for b in all_b:
                             b.y -= 10
                 if event.button == 4:
-                    if up_border.y + 10 <= 50:
+                    if up_border.y + 10 <= 80:
                         for b in all_b:
                             b.y += 10
         screen.fill((30, 30, 30))
+        back_button.draw(screen, outline=pg.Color("BLACK"))
         for b in all_b:
             b.draw(screen, outline='BLACK')
         pg.display.flip()
+        if back_button.is_over(pg.mouse.get_pos()):
+            return None
         for b in all_b:
             if b.is_over(pg.mouse.get_pos()):
                 res = brawler_menu(user_data, b.text)
@@ -374,7 +384,7 @@ def main(sock):
     brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
     fg_sprites.add(brawler)
-    event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"), bold=True)
+    event_button = Button(500, 580, 500, 100, text='SHOWDOWN', r=20, color=pg.Color("yellow"), bold=True)
     event_img = pg.sprite.Sprite()
     event_img.image = pg.transform.scale(load_image("showdown.png"), (100, 100))
     event_img.rect = event_img.image.get_rect()
