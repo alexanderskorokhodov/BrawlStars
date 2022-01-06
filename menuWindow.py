@@ -1,9 +1,9 @@
 import os.path
 import sys
+import time
 from json import loads
-from pygame_animatedgif import AnimatedGifSprite
+
 import pygame as pg
-import pygame.transform
 
 from commands import *  # commands
 
@@ -25,12 +25,98 @@ COLOR_ACTIVE = pg.Color('dodgerblue2')
 COLOR_DEFAULT = pg.Color(102, 102, 190)
 MAIN_FONT = pg.font.Font('./data/mainFont.ttf', 36)
 BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 70)
+CHOOSE_BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
+CUPS_FONT = pg.font.Font('./data/mainFont.ttf', 30)
 POWER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
 fps = 60
 screen = pg.display.set_mode(size)
 ev: pg.event
+
+ranks = []
+for row in open('data/ranks.csv', mode='r').readlines()[1:]:
+    ranks.append(tuple(map(int, row.strip().split(';'))))
+
+
+def draw_outline(x, y, string, win, font):
+    def draw_text(x_, y_, s, col, window, bold=True):
+        text = font.render(s, bold, col)
+        window.blit(text, (x_, y_))
+
+    r = 4
+    draw_text(x - 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y + r, string, 'black', win)
+    draw_text(x - 1, y + r, string, 'black', win)
+    draw_text(x, y, string, 'white', win)
+
+
+class ChooseBrawlerButton:
+    def __init__(self, x, y, w, h, data, brawler_name='el_primo', color=COLOR_DEFAULT, r=0,
+                 text_color=pg.Color("Black"),
+                 bold=False, sound='data/tones/menu_click_08.mp3'):
+        self.color = color
+        self.og_col = color
+        self.x = x
+        self.y = y
+        self.width = w
+        self.height = h
+        self.text = brawler_name
+        self.radius = r
+        self.textColor = text_color
+        self.bold = bold
+        self.sound = pg.mixer.Sound(sound)
+        self.img = load_image(f'brawlers/inChoose/{brawler_name.lower()}.png')
+        self.rank = max(list((filter(lambda s: s[1] <= data['brawlers'][brawler_name][0], ranks))),
+                        key=lambda a: a[0])[0]
+        self.cups = data['brawlers'][brawler_name][0]
+
+    def draw(self, win, outline=None):
+        # Call this method to draw the button on the screen
+        fg = pg.sprite.Group()
+        brawler_group = pg.sprite.Group()
+        rank_img = pg.sprite.Sprite()
+        rank_img.image = pg.transform.scale(load_image(f"ranks/Rank_{self.rank}.png"), (60, 68))
+        rank_img.rect = rank_img.image.get_rect()
+        rank_img.rect.x, rank_img.rect.y = self.x - 10, self.y - 15
+        if outline:
+            pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
+                         border_radius=self.radius)
+        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
+        pg.draw.rect(win, self.color, (self.x, self.y, self.width, 32), 0, border_top_left_radius=self.radius,
+                     border_top_right_radius=self.radius)
+        brawler = pg.sprite.Sprite()
+        brawler.image = pg.transform.scale(self.img, (self.height - 16, int((self.height - 16) / 6 * 5)))
+        brawler.rect = brawler.image.get_rect()
+        brawler.rect.x, brawler.rect.y = self.x, self.y + 32
+        pg.draw.rect(win, (86, 3, 25), (self.x, self.y, self.width, 32), 0)
+        brawler_group.add(brawler)
+        fg.add(rank_img)
+        brawler_group.draw(win)
+        pg.draw.rect(win, 'BLACK', (self.x, self.y + 32, self.width, int((self.height - 16) / 6 * 5)), 4)
+        fg.draw(win)
+        if self.text != '':
+            draw_outline(self.x, self.y + (self.height / 2) + 50, self.text.upper().replace('_', ' '), win,
+                         CHOOSE_BRAWLER_FONT)
+        draw_outline(self.x + self.width // 2, self.y - 3, str(self.cups), win, CUPS_FONT)
+
+    def is_over(self, pos):
+        if self.x < pos[0] < self.x + self.width:
+            if self.y < pos[1] < self.y + self.height:
+                self.color = (255, 245, 238)
+            else:
+                self.color = self.og_col
+        else:
+            self.color = self.og_col
+        global ev
+        for event in ev:
+            if event.type == pg.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    if self.x < pos[0] < self.x + self.width:
+                        if self.y < pos[1] < self.y + self.height:
+                            self.sound.play()
+                            return self.text
 
 
 class Button:
@@ -46,7 +132,7 @@ class Button:
         self.radius = r
         self.textColor = text_color
         self.bold = bold
-        self.sound = pygame.mixer.Sound(sound)
+        self.sound = pg.mixer.Sound(sound)
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -151,18 +237,18 @@ def server_error_window():
         all_sprites.draw(screen)
         try_button.draw(screen)
         screen.blit(text_server_error, (500, 400, 300, 32))
-        pg.display.flip()
         if try_button.is_over(pg.mouse.get_pos()):
             running = False
+        pg.display.flip()
         clock.tick(fps)
     return True
 
 
-def brawlers_menu(user_data):
+def brawler_menu(user_data, chosen_brawler):
     running = True
     brawlers_stats = user_data['brawlers']
-    brawlers = list(sorted(brawlers_stats.keys()))
-    current_id = 0
+    brawlers = list(brawlers_stats.keys())
+    current_id = brawlers.index(chosen_brawler)
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     background.image = load_image("menu.jpg")
@@ -173,8 +259,6 @@ def brawlers_menu(user_data):
     power_text = POWER_FONT.render(
         f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
         pg.Color("BLACK"))
-    left_button = Button(100, 300, 50, 50, text='<', r=20)
-    right_button = Button(600, 300, 50, 50, text='>', r=20)
     cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
     select_button = Button(1000, 630, 400, 50, text='Select', r=20, sound='data/tones/select_brawler_01.mp3')
     brawler = pg.sprite.Sprite()
@@ -191,8 +275,6 @@ def brawlers_menu(user_data):
                 quit()
         screen.fill((30, 30, 30))
         bg_sprites.draw(screen)
-        right_button.draw(screen, outline=pg.Color("BLACK"))
-        left_button.draw(screen, outline=pg.Color("BLACK"))
         brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.upper(), True, pg.Color("BLACK"))
         power_text = POWER_FONT.render(
             f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
@@ -203,20 +285,55 @@ def brawlers_menu(user_data):
         cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
         select_button.draw(screen, outline=pg.Color("BLACK"))
-        brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{brawlers[current_id].lower()}.png"), (400, 400))
+        brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{brawlers[current_id].lower()}.png"),
+                                           (400, 400))
         brawler.rect = brawler.image.get_rect()
         brawler.rect.x, brawler.rect.y = 175, 100
         fg.draw(screen)
         if back_button.is_over(pg.mouse.get_pos()):
             return None
-        if right_button.is_over(pg.mouse.get_pos()):
-            current_id += 1
-        if left_button.is_over(pg.mouse.get_pos()):
-            current_id -= 1
         if select_button.is_over(pg.mouse.get_pos()):
             return brawlers[current_id]
         current_id = current_id % len(brawlers)
         pg.display.flip()
+        clock.tick(fps)
+    return None
+
+
+def brawlers_menu(user_data):
+    global ev
+    running = True
+    all_b = []
+    for i, br in enumerate(user_data['brawlers']):
+        br = ChooseBrawlerButton(10 + i % 4 * 350, 15 + 350 * (i // 4), 300, 300, user_data, brawler_name=br)
+        all_b.append(br)
+        if i == len(user_data['brawlers']) - 1:
+            down_border = br
+        if i == 0:
+            up_border = br
+    while running:
+        ev = pg.event.get()
+        for event in ev:
+            if event.type == pg.QUIT:
+                running = False
+            elif event.type == pg.MOUSEBUTTONDOWN or event.type == pg.MOUSEBUTTONUP:
+                if event.button == 5:
+                    if down_border.y - 10 + down_border.height >= height - 50:
+                        for b in all_b:
+                            b.y -= 10
+                if event.button == 4:
+                    if up_border.y + 10 <= 50:
+                        for b in all_b:
+                            b.y += 10
+        screen.fill((30, 30, 30))
+        for b in all_b:
+            b.draw(screen, outline='BLACK')
+        pg.display.flip()
+        for b in all_b:
+            if b.is_over(pg.mouse.get_pos()):
+                res = brawler_menu(user_data, b.text)
+                if res:
+                    return res
         clock.tick(fps)
     return None
 
@@ -233,12 +350,12 @@ def main(sock):
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     fg_sprites = pg.sprite.Group()
     trophy = pg.sprite.Sprite()
-    trophy.image = pygame.transform.scale(load_image("trophy.png"), (64, 64))
+    trophy.image = pg.transform.scale(load_image("trophy.png"), (64, 64))
     trophy.rect = trophy.image.get_rect()
     trophy.rect.x, trophy.rect.y = 350, 20
     fg_sprites.add(trophy)
     coin = pg.sprite.Sprite()
-    coin.image = pygame.transform.scale(load_image("coin.png"), (64, 64))
+    coin.image = pg.transform.scale(load_image("coin.png"), (64, 64))
     coin.rect = coin.image.get_rect()
     coin.rect.x, coin.rect.y = 1000, 20
     fg_sprites.add(coin)
@@ -252,7 +369,6 @@ def main(sock):
     user_button.text = user_data['nickname']
     trophies_button.text = '    ' + str(user_data['all_cups'])
     money_button.text = '      ' + str(user_data['money'])
-    print(list(user_data['brawlers'].keys()))
     current_brawler = list(user_data['brawlers'].keys())[0]
     brawler = pg.sprite.Sprite()
     brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
@@ -260,7 +376,7 @@ def main(sock):
     fg_sprites.add(brawler)
     event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"), bold=True)
     event_img = pg.sprite.Sprite()
-    event_img.image = pygame.transform.scale(load_image("showdown.png"), (100, 100))
+    event_img.image = pg.transform.scale(load_image("showdown.png"), (100, 100))
     event_img.rect = event_img.image.get_rect()
     event_img.rect.x, event_img.rect.y = 500, 580
     fg_sprites.add(event_img)

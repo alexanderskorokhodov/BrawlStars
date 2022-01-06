@@ -22,7 +22,7 @@ def load_image(name, color_key=None):
 
 
 class Brawler(pygame.sprite.Sprite):
-    def __init__(self, x_, y_, name, health, level, level_health_increase, number_of_attack, reload):
+    def __init__(self, x_, y_, name, health, level, number_of_attack, reload):
         super().__init__()
         self.image = pygame.transform.scale(load_image(f"brawlers/gaming{name}.png"), (50, 50))
         self.rect = self.image.get_rect()
@@ -31,7 +31,7 @@ class Brawler(pygame.sprite.Sprite):
         self.angle = 0
         self.is_shoot = False
         self.is_super = False
-        self.max_health = health + (level - 1) * level_health_increase
+        self.max_health = health + (level - 1) * (health // 20)
         self.current_health = self.max_health
 
     def update(self, x_shoot, y_shoot, x, y, mouse_buttons, velocity):
@@ -70,47 +70,18 @@ class Brawler(pygame.sprite.Sprite):
 
 
 class Shelly(Brawler):
-    def __init__(self, x, y, level, level_health_increase=190):
-        super().__init__(x, y, 'Shelly', 3600, level, level_health_increase=level_health_increase)
+    def __init__(self, x, y, level):
+        super().__init__(x, y, 'Shelly', 3600, level)
 
 
 class Colt(Brawler):
-    def __init__(self, x, y, level, level_health_increase=140):
-        super(Colt, self).__init__(x, y, 'Colt', 2800, level, level_health_increase=level_health_increase)
+    def __init__(self, x, y, level):
+        super(Colt, self).__init__(x, y, 'Colt', 2800, level)
 
 
 class Bull(Brawler):
     def __init__(self, x, y):
         super(Colt, self).__init__(x, y, 'Bull', 5000)
 
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
-
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
-
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
-
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
-
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
-
-
-class Colt(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Colt', 2800)
 
 
