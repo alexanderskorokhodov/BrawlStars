@@ -1,7 +1,7 @@
 import os.path
 import sys
 from json import loads
-
+from pygame_animatedgif import AnimatedGifSprite
 import pygame as pg
 import pygame.transform
 
@@ -178,7 +178,7 @@ def brawlers_menu(user_data):
     cups_button = Button(150, 630, 430, 50, text='Cups:', r=20)
     select_button = Button(1000, 630, 400, 50, text='Select', r=20, sound='data/tones/select_brawler_01.mp3')
     brawler = pg.sprite.Sprite()
-    brawler.image = pg.transform.scale(load_image(f"brawlers/{brawlers[current_id]}.png"), (400, 400))
+    brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{brawlers[current_id]}.png"), (400, 400))
     brawler.rect = brawler.image.get_rect()
     brawler.rect.x, brawler.rect.y = 175, 100
     fg = pg.sprite.Group()
@@ -193,7 +193,7 @@ def brawlers_menu(user_data):
         bg_sprites.draw(screen)
         right_button.draw(screen, outline=pg.Color("BLACK"))
         left_button.draw(screen, outline=pg.Color("BLACK"))
-        brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.title(), True, pg.Color("BLACK"))
+        brawler_name = BRAWLER_FONT.render(f'{brawlers[current_id]}'.upper(), True, pg.Color("BLACK"))
         power_text = POWER_FONT.render(
             f'Power {brawlers_stats[brawlers[current_id]][1]} ({brawlers_stats[brawlers[current_id]][2]}/100)', True,
             pg.Color("BLACK"))
@@ -203,7 +203,7 @@ def brawlers_menu(user_data):
         cups_button.draw(screen, outline=pg.Color("BLACK"))
         screen.blit(power_text, (1000, 200, 300, 64))
         select_button.draw(screen, outline=pg.Color("BLACK"))
-        brawler.image = pg.transform.scale(load_image(f"brawlers/{brawlers[current_id]}.png"), (400, 400))
+        brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{brawlers[current_id].lower()}.png"), (400, 400))
         brawler.rect = brawler.image.get_rect()
         brawler.rect.x, brawler.rect.y = 175, 100
         fg.draw(screen)
@@ -247,7 +247,7 @@ def main(sock):
     trophies_button = Button(350, 20, 200, 64, text=f'', r=20, bold=True)
     money_button = Button(1000, 20, 200, 64, text=f'', r=20, text_color=pg.Color("WHITE"), color=pg.Color("Black"),
                           bold=True)
-    brawlers_menu_button = Button(20, 250, 200, 64, text='Brawlers', r=20, color=pg.Color("Yellow"))
+    brawlers_menu_button = Button(20, 250, 200, 64, text='BRAWLERS', r=20, color=pg.Color("Yellow"))
     user_data = get_player_info(sock)
     user_button.text = user_data['nickname']
     trophies_button.text = '    ' + str(user_data['all_cups'])
@@ -255,7 +255,7 @@ def main(sock):
     print(list(user_data['brawlers'].keys()))
     current_brawler = list(user_data['brawlers'].keys())[0]
     brawler = pg.sprite.Sprite()
-    brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
+    brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
     brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
     fg_sprites.add(brawler)
     event_button = Button(500, 580, 500, 100, text='Showdown', r=20, color=pg.Color("yellow"), bold=True)
@@ -264,11 +264,11 @@ def main(sock):
     event_img.rect = event_img.image.get_rect()
     event_img.rect.x, event_img.rect.y = 500, 580
     fg_sprites.add(event_img)
-    play_button = Button(1050, 580, 400, 100, text='Start', r=20, color=pg.Color("Yellow"), bold=True)
+    play_button = Button(1050, 580, 400, 100, text='PLAY', r=20, color=pg.Color("Yellow"), bold=True)
     pg.mixer.music.load('data/tones/main-menu-2.mp3')
     pg.mixer.music.play(-1)
     while running:
-        brawler.image = pg.transform.scale(load_image(f"brawlers/{current_brawler.lower()}.png"), (450, 450))
+        brawler.image = pg.transform.scale(load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
         brawler.rect = brawler.image.get_rect(center=(width // 2, height // 2))
         global ev
         ev = pg.event.get()
