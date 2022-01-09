@@ -423,7 +423,7 @@ def brawlers_menu(user_data):
 
 def play(chosen_brawler, chosen_event, sock):
     sock.sendall(
-        (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10 + chosen_brawler % 10) + Delimiter).encode())
+        (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(chosen_brawler % 10) + Delimiter).encode())
 
 
 def main(sock):
