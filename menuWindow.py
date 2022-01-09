@@ -37,6 +37,10 @@ ranks = []
 for row in open('data/ranks.csv', mode='r').readlines()[1:]:
     ranks.append(tuple(map(int, row.strip().split(';'))))
 
+levels = []
+for row in open('data/power.csv', mode='r').readlines()[1:]:
+    levels.append(tuple(map(int, row.strip().split(';'))))
+
 
 def draw_outline(x, y, string, win, font):
     def draw_text(x_, y_, s, col, window, bold=True):
@@ -70,6 +74,8 @@ class ChooseBrawlerButton:
         self.rank = max(list((filter(lambda s: s[1] <= data['brawlers'][brawler_name][0], ranks))),
                         key=lambda a: a[0])[0]
         self.cups = data['brawlers'][brawler_name][0]
+        self.power_points = data['brawlers'][brawler_name][2]
+        self.level = data['brawlers'][brawler_name][1]
 
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
@@ -89,6 +95,10 @@ class ChooseBrawlerButton:
         brawler.image = pg.transform.scale(self.img, (self.height - 16, int((self.height - 16) / 6 * 5)))
         brawler.rect = brawler.image.get_rect()
         brawler.rect.x, brawler.rect.y = self.x, self.y + 32
+        power_points = pg.sprite.Sprite()
+        power_points.image = pg.transform.scale(load_image("power_point.png"), (45, 50))
+        power_points.rect = power_points.image.get_rect()
+        power_points.rect.x, power_points.rect.y = self.x - 10, self.y + int((self.height - 16) / 6 * 5) + 20
         trophy = pg.sprite.Sprite()
         trophy.image = pg.transform.scale(load_image("trophy.png"), (32, 32))
         trophy.rect = trophy.image.get_rect()
@@ -98,15 +108,38 @@ class ChooseBrawlerButton:
         if self.cups >= 1250:
             pg.draw.rect(win, (226, 136, 0), (self.x, self.y, self.width, 32), 0)
         else:
-            pg.draw.rect(win, (226, 136, 0), (self.x, self.y, int(self.width * max(self.cups - ranks[self.rank - 1][1], 0) / (ranks[self.rank][1] - ranks[self.rank-1][1])), 32), 0)
+            pg.draw.rect(win, (226, 136, 0), (self.x, self.y,
+                                              int(self.width * max(self.cups - ranks[self.rank - 1][1], 0) / (
+                                                      ranks[self.rank][1] - ranks[self.rank - 1][1])), 32), 0)
+        print(levels, self.power_points, self.level)
+        if self.level == 11:
+            pg.draw.rect(win, "YELLOW", (self.x, self.y + int((self.height - 16) / 6 * 5) + 32, self.width, 32), 0)
+        elif self.power_points >= levels[self.level - 1][1]:
+            pg.draw.rect(win, "GREEN", (self.x, self.y + int((self.height - 16) / 6 * 5) + 32, self.width, 32), 0)
+            draw_outline(self.x + 90, self.y + int((self.height - 16) / 6 * 5) + 30, 'UPGRADE', win,
+                         CUPS_FONT)
+        else:
+            pg.draw.rect(win, (226, 136, 0), (self.x, self.y + int((self.height - 16) / 6 * 5) + 32,
+                                              int(self.width * self.power_points /
+                                                  levels[self.level - 1][1]), 32), 0)
+            draw_outline(self.x + 120, self.y + int((self.height - 16) / 6 * 5) + 30,
+                         f'{self.power_points}/{levels[self.level - 1][1]}', win, CUPS_FONT)
         brawler_group.add(brawler)
         fg.add(rank_img)
         fg.add(trophy)
+        fg.add(power_points)
         brawler_group.draw(win)
+        pg.draw.rect(win, 'BLACK', (self.x + self.width - 50, self.y + self.height - 85, 50, 50))
         pg.draw.rect(win, 'BLACK', (self.x, self.y + 32, self.width, int((self.height - 16) / 6 * 5)), 4)
+        if self.level < 10:
+            draw_outline(self.x + self.width - 33, self.y + self.height - 85,
+                         f'{self.level}', win, POWER_FONT)
+        else:
+            draw_outline(self.x + self.width - 40, self.y + self.height - 85, f'{self.level}', win, POWER_FONT)
+        draw_outline(self.x + self.width - 50, self.y + self.height - 100, 'POWER', win, pg.font.Font('./data/mainFont.ttf', 18))
         fg.draw(win)
         if self.text != '':
-            draw_outline(self.x, self.y + (self.height / 2) + 70, self.text.upper().replace('_', ' '), win,
+            draw_outline(self.x + 10, self.y + (self.height / 2) + 65, self.text.upper().replace('_', ' '), win,
                          CHOOSE_BRAWLER_FONT)
         draw_outline(self.x + self.width // 2, self.y - 3, str(self.cups), win, CUPS_FONT)
 
