@@ -101,12 +101,15 @@ class InputBox:
             self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
         if event.type == pg.KEYDOWN:
             if self.active:
+                if event.key == pg.K_RETURN:
+                    return True
                 if event.key == pg.K_BACKSPACE:
                     self.text = self.text[:-1]
                 elif len(self.text) < 12:
                     self.text += event.unicode
                 # Re-render the text.
                 self.txt_surface = FONT.render(self.text, True, self.color)
+        return False
 
     def update(self):
         pass
@@ -215,6 +218,8 @@ def login_reg_window(sock):
 
     text_error = FONT.render("", True, (255, 0, 0))
     input_box1 = InputBox(600, 150, 300, 32)
+    input_box1.active = True
+    input_box1.color = COLOR_ACTIVE
     input_box2 = InputBox(600, 250, 300, 32)
     input_box3 = InputBox(600, 350, 300, 32)
     input_boxes = [input_box1, input_box2, input_box3]
@@ -228,14 +233,23 @@ def login_reg_window(sock):
     while not done:
         global ev
         ev = pg.event.get()
+        a = False
         if window == 'LOG':
             for event in ev:
                 if event.type == pg.QUIT:
                     done = True
-                for box in input_boxes:
-                    box.handle_event(event)
-
-            for box in input_boxes:
+                a = False
+                for box in input_boxes[:-1]:
+                    b = box.handle_event(event)
+                    if b and input_boxes.index(box) == 0:
+                        input_boxes[0].active = False
+                        input_boxes[1].active = True
+                        input_boxes[0].color = COLOR_INACTIVE
+                        input_boxes[1].color = COLOR_ACTIVE
+                        break
+                    elif b and input_boxes.index(box) == 1:
+                        a = True
+            for box in input_boxes[:-1]:
                 box.update()
 
             screen.fill((30, 30, 30))
@@ -249,7 +263,7 @@ def login_reg_window(sock):
 
             pg.display.flip()
 
-            if continue_button.is_over(pg.mouse.get_pos()):
+            if continue_button.is_over(pg.mouse.get_pos()) or a:
                 check, mes = check_log_data()
                 if check:
                     login, password = get_data()[:-1]
@@ -260,18 +274,36 @@ def login_reg_window(sock):
                         done = True
                         return True, login, password
                     else:
+                        a = False
                         text_error = FONT.render('Invalid login or password', True, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, True, (255, 0, 0))
             if reg_button.is_over(pg.mouse.get_pos()):
                 window = 'REG'
                 text_error = FONT.render("", True, (255, 0, 0))
+                input_box1.active = True
+                input_box1.color = COLOR_ACTIVE
         else:
             for event in ev:
                 if event.type == pg.QUIT:
                     done = True
+                a = False
                 for box in input_boxes:
-                    box.handle_event(event)
+                    b = box.handle_event(event)
+                    if b and input_boxes.index(box) == 0:
+                        input_boxes[0].active = False
+                        input_boxes[1].active = True
+                        input_boxes[0].color = COLOR_INACTIVE
+                        input_boxes[1].color = COLOR_ACTIVE
+                        break
+                    elif b and input_boxes.index(box) == 1:
+                        input_boxes[1].active = False
+                        input_boxes[2].active = True
+                        input_boxes[1].color = COLOR_INACTIVE
+                        input_boxes[2].color = COLOR_ACTIVE
+                        break
+                    elif b and input_boxes.index(box) == 2:
+                        a = True
 
             for box in input_boxes:
                 box.update()
@@ -290,7 +322,7 @@ def login_reg_window(sock):
 
             pg.display.flip()
 
-            if continue_button.is_over(pg.mouse.get_pos()):
+            if continue_button.is_over(pg.mouse.get_pos()) or a:
                 check, mes = check_reg_data()
                 if check:
                     login, password, nick = get_data()
@@ -304,9 +336,12 @@ def login_reg_window(sock):
                         text_error = FONT.render('This login already exists', True, (255, 0, 0))
                 else:
                     text_error = FONT.render(mes, True, (255, 0, 0))
+                    a = False
             if back_button.is_over(pg.mouse.get_pos()):
                 window = 'LOG'
                 text_error = FONT.render("", True, (255, 0, 0))
+                input_box1.active = True
+                input_box1.color = COLOR_ACTIVE
         clock.tick(fps)
 
 
