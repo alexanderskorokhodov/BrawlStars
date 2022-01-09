@@ -5,6 +5,12 @@ import sqlite3
 from json import dumps
 
 
+# for any func without log_in()
+def close_connection(login):
+    players[login].close()
+    del players[login]
+
+
 def log_in(sock, id):
 
     def check_password(login, password):
@@ -73,6 +79,7 @@ def log_in(sock, id):
                 break
 
         if successful_authorization:
+            players[login] = sock
             menu(sock, id, login)
     except ConnectionError:
         sock.close()
@@ -101,37 +108,80 @@ def menu(sock, id, login):
         else:
             con.close()
             return True
+    try:
+        player_info = get_player_info(login)
+        print(dumps(player_info))
+        sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
+        mes = sock.recv(10).decode()
+        if len(mes) == 0:
+            close_connection(login)
+        elif mes[-1] == Delimiter:
+            if mes.startswith(CMD_FIND_MATCH):
+                try:
+                    event_id = int(mes[len(CMD_FIND_MATCH)])
+                    brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
+                    if check_player_brawler(login, brawler_id):
+                        rooms[event_id].append(login)
+                        sock.sendall((CMD_PLAYERS_IN_ROOM + '1/10' + Delimiter).encode())
+                        if len(rooms[event_id]) == 1:
+                            match_finder(event_id)
+                    else:
+                        close_connection(login)
+                except ValueError:
+                    close_connection(login)
 
-    player_info = get_player_info(login)
-    print(dumps(player_info))
-    sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
-    mes = sock.recv(10).decode()
-    if mes[-1] == Delimiter:
-        if mes.startswith(CMD_FIND_MATCH):
-            try:
-                event_id = int(mes[len(CMD_FIND_MATCH)])
-                brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
-                if check_player_brawler(login, brawler_id):
-                    print('starts to find math for ' + login)
-                else:
-                    sock.close()
-            except ValueError:
-                sock.close()
-    else:
-        sock.close()
+            # maybe another command in future
+            elif False:
+                pass
+            else:
+                close_connection(login)
 
+        else:
+            close_connection(login)
+    except ConnectionError:
+        close_connection(login)
+
+
+def match_finder(event_id):
+    number_of_players = len(rooms[event_id])
+    while rooms[event_id]:
+        try:
+            if len(rooms[event_id]) >= amount_of_players_for_event[event_id]:
+                room = []
+                for i in range(amount_of_players_for_event[event_id]):
+                    players[rooms[event_id][i]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
+                    room.append(rooms[event_id][i])
+                    rooms[event_id].remove(rooms[event_id][i])
+                thr = Thread(target=game_funcs[event_id], args=(room,))
+                thr.start()
+            else:
+                if len(rooms[event_id]) != number_of_players:
+                    number_of_players = len(rooms[event_id])
+                    for i in range(len(rooms[event_id])):
+                        players[rooms[event_id][i]].sendall(
+                            (CMD_PLAYERS_IN_ROOM + f'{number_of_players}/10' + Delimiter).encode())
+        except ConnectionError:
+            close_connection(rooms[event_id][i])
+            rooms[event_id].remove(rooms[event_id][i])
+
+
+def showdown_game(room):
+    print('game_starts')
 
 
 if __name__ == '__main__':
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    # server address
     server_address = (socket.gethostbyname(socket.gethostname()), 10000)
-
     print('Старт сервера на {} порт {}'.format(*server_address))
     sock.bind(server_address)
     sock.listen(10)
+
+    # events: showdown(event_id = 0)
+    rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
+    players = {}  # players[player_login] = player socket
+    amount_of_players_for_event = {0: 10}  # amount_of_players_for_event[event_id] = amount_of_players
+    game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:
         connection, client_address = sock.accept()
