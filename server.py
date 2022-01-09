@@ -107,7 +107,7 @@ def menu(sock, id, login):
     sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
     mes = sock.recv(10).decode()
     if mes[-1] == Delimiter:
-        if mes.starts_with(CMD_TO_LOG_IN):
+        if mes.startswith(CMD_TO_LOG_IN):
             try:
                 event_id = int(mes[len(CMD_FIND_MATCH)])
                 brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
