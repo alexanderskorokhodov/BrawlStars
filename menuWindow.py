@@ -422,7 +422,8 @@ def brawlers_menu(user_data):
 
 
 def play(chosen_brawler, chosen_event, sock):
-    sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_event) + Delimiter).encode())
+    sock.sendall(
+        (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10 + chosen_brawler % 10) + Delimiter).encode())
 
 
 def main(sock):
@@ -485,10 +486,10 @@ def main(sock):
         event_button.draw(screen, outline=pg.Color("Black"))
         fg_sprites.draw(screen)
         pg.display.flip()
+        if play_button.is_over(pg.mouse.get_pos()):
+            play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
         if brawlers_menu_button.is_over(pg.mouse.get_pos()):
             chosen_brawler = brawlers_menu(user_data)
             if chosen_brawler:
                 current_brawler = chosen_brawler
-        if play_button.is_over(pg.mouse.get_pos()):
-            play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
         clock.tick(fps)
