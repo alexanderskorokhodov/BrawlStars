@@ -111,7 +111,6 @@ class ChooseBrawlerButton:
             pg.draw.rect(win, (226, 136, 0), (self.x, self.y,
                                               int(self.width * max(self.cups - ranks[self.rank - 1][1], 0) / (
                                                       ranks[self.rank][1] - ranks[self.rank - 1][1])), 32), 0)
-        print(levels, self.power_points, self.level)
         if self.level == 11:
             pg.draw.rect(win, "YELLOW", (self.x, self.y + int((self.height - 16) / 6 * 5) + 32, self.width, 32), 0)
         elif self.power_points >= levels[self.level - 1][1]:
@@ -422,8 +421,8 @@ def brawlers_menu(user_data):
     return None
 
 
-def play():
-    pass
+def play(chosen_brawler, chosen_event, sock):
+    sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_event) + Delimiter).encode())
 
 
 def main(sock):
@@ -438,6 +437,7 @@ def main(sock):
     trophy.rect = trophy.image.get_rect()
     trophy.rect.x, trophy.rect.y = 350, 20
     fg_sprites.add(trophy)
+    chosen_event = 0
     coin = pg.sprite.Sprite()
     coin.image = pg.transform.scale(load_image("coin.png"), (64, 64))
     coin.rect = coin.image.get_rect()
@@ -490,5 +490,5 @@ def main(sock):
             if chosen_brawler:
                 current_brawler = chosen_brawler
         if play_button.is_over(pg.mouse.get_pos()):
-            play()
+            play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
         clock.tick(fps)
