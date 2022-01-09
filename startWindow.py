@@ -2,7 +2,6 @@ import os.path
 import random
 import socket
 import sys
-from random import randint
 
 import pygame as pg
 from pygame.draw import rect
@@ -259,7 +258,7 @@ def login_reg_window(sock):
                     message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
-                        return True
+                        return True, login, password
                     else:
                         text_error = FONT.render('Invalid login or password', True, (255, 0, 0))
                 else:
@@ -300,7 +299,7 @@ def login_reg_window(sock):
                     message = sock.recv(max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
-                        return True
+                        return True, login, password
                     else:
                         text_error = FONT.render('This login already exists', True, (255, 0, 0))
                 else:
@@ -325,8 +324,9 @@ def main():
             if not server_error_window():
                 quit()
     # login screen
-    if login_reg_window(sock):
-        return True, sock
+    res, login, password = login_reg_window(sock)
+    if res:
+        return True, sock, login, password
     return False, None
 
 

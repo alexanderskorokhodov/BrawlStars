@@ -1,10 +1,10 @@
 import os.path
 import sys
 from json import loads
-
 import pygame as pg
 
 from commands import *  # commands
+import socket
 
 
 def get_player_info(sock):
@@ -260,7 +260,7 @@ def load_image(name, color_key=None):
     return image
 
 
-def server_error_window():
+def server_error_window(login, password):
     running = True
     try_button = Button(600, 300, 300, 64, text='Try again', color=COLOR_DEFAULT, r=16)
     all_sprites = pg.sprite.Group()
@@ -269,6 +269,8 @@ def server_error_window():
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     all_sprites.add(background)
     text_server_error = MAIN_FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
+    data = False
+    sock = None
     while running:
         global ev
         ev = pg.event.get()
@@ -277,13 +279,25 @@ def server_error_window():
                 quit()
         screen.fill((30, 30, 30))
         all_sprites.draw(screen)
-        try_button.draw(screen)
+        try_button.draw(screen, True)
         screen.blit(text_server_error, (500, 400, 300, 32))
         if try_button.is_over(pg.mouse.get_pos()):
-            running = False
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                server_address = (socket.gethostbyname(socket.gethostname()), 10000)
+                print('Подключено к {} порт {}'.format(*server_address))
+                sock.connect(server_address)
+                sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
+                message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
+                if message != CMD_RIGHT_PASSWORD:
+                    raise
+                data = get_player_info(sock)
+                running = False
+            except:
+                running = True
         pg.display.flip()
         clock.tick(fps)
-    return True
+    return sock, data
 
 
 def upgrade(brawler):
@@ -399,11 +413,11 @@ def brawlers_menu(user_data):
                 if event.button == 5:
                     if down_border.y - 10 + down_border.height >= height - 50:
                         for b in all_b:
-                            b.y -= 10
+                            b.y -= 20
                 if event.button == 4:
                     if up_border.y + 10 <= 80:
                         for b in all_b:
-                            b.y += 10
+                            b.y += 20
         screen.fill((30, 30, 30))
         bg_sprites.draw(screen)
         back_button.draw(screen, outline=pg.Color("BLACK"))
@@ -426,7 +440,7 @@ def play(chosen_brawler, chosen_event, sock):
         (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(chosen_brawler % 10) + Delimiter).encode())
 
 
-def main(sock):
+def main(sock, login, password):
     running = True
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
@@ -451,7 +465,7 @@ def main(sock):
                           bold=True)
     brawlers_menu_button = Button(20, 250, 200, 64, text='BRAWLERS', r=20, color=pg.Color("Yellow"))
     user_data = get_player_info(sock)
-    user_button.text = user_data['nickname']
+    user_button.text = user_data['nickname'].encode()
     trophies_button.text = '        ' + str(sum(map(lambda x: x[0], user_data['brawlers'].values())))
     money_button.text = '         ' + str(user_data['money'])
     current_brawler = list(user_data['brawlers'].keys())[0]
@@ -487,7 +501,12 @@ def main(sock):
         fg_sprites.draw(screen)
         pg.display.flip()
         if play_button.is_over(pg.mouse.get_pos()):
-            play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
+            try:
+                play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
+            except:
+                data = False
+                while not data:
+                    sock, data = server_error_window(login, password)
         if brawlers_menu_button.is_over(pg.mouse.get_pos()):
             chosen_brawler = brawlers_menu(user_data)
             if chosen_brawler:
