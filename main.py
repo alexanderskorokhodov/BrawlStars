@@ -1,7 +1,6 @@
 import menuWindow
 import startWindow
 
-res, sock = startWindow.main()
+res, sock, login, password = startWindow.main()
 if res:
-
-    menuWindow.main(sock)
+    menuWindow.main(sock, login, password)
