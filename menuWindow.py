@@ -413,11 +413,11 @@ def brawlers_menu(user_data):
                 if event.button == 5:
                     if down_border.y - 10 + down_border.height >= height - 50:
                         for b in all_b:
-                            b.y -= 10
+                            b.y -= 20
                 if event.button == 4:
                     if up_border.y + 10 <= 80:
                         for b in all_b:
-                            b.y += 10
+                            b.y += 20
         screen.fill((30, 30, 30))
         bg_sprites.draw(screen)
         back_button.draw(screen, outline=pg.Color("BLACK"))
