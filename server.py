@@ -30,6 +30,7 @@ def log_in(sock, id):
             cur.execute(
                 f"""INSERT INTO passwords(login, password) VALUES('{login}', '{password}')""")
             cur.execute(f"""INSERT INTO players(login, nickname) VALUES('{login}', '{nickname}')""")
+            cur.execute(f"""INSERT INTO players_brawlers(login, brawler_id, cups, power, power_points) VALUES('{login}', 1, 0, 1, 0)""")
             con.commit()
             con.close()
             return True
@@ -87,13 +88,38 @@ def menu(sock, id, login):
             info[item] = cur.execute(f"""SELECT {item} FROM players WHERE login = '{login}'""").fetchone()[0]
         info['brawlers'] = {}
         for i in cur.execute(f"""SELECT brawler_id FROM players_brawlers WHERE login = '{login}'""").fetchall():
-            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT brawler_id, cups, power, power_points FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
+            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT cups, power, power_points, brawler_id FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
         con.close()
         return info
+
+    def check_player_brawler(login, id):
+        con = sqlite3.connect("BrawlStars.db")
+        cur = con.cursor()
+        if cur.execute(f"""SELECT id FROM players_brawlers WHERE brawler_id = {id} AND login = '{login}'""").fetchone() is None:
+            con.close()
+            return False
+        else:
+            con.close()
+            return True
 
     player_info = get_player_info(login)
     print(dumps(player_info))
     sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
+    mes = sock.recv(10).decode()
+    if mes[-1] == Delimiter:
+        if mes.starts_with(CMD_TO_LOG_IN):
+            try:
+                event_id = int(mes[len(CMD_FIND_MATCH)])
+                brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
+                if check_player_brawler(login, brawler_id):
+                    print('starts to find math for ' + login)
+                else:
+                    sock.close()
+            except ValueError:
+                sock.close()
+    else:
+        sock.close()
+
 
 
 if __name__ == '__main__':
