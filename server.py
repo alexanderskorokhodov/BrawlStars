@@ -9,6 +9,7 @@ from json import dumps
 def close_connection(login):
     players[login].close()
     del players[login]
+    print('disconnected with ' + login)
 
 
 def log_in(sock, id):
@@ -151,7 +152,8 @@ def match_finder(event_id):
                 for i in range(amount_of_players_for_event[event_id]):
                     players[rooms[event_id][i]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
                     room.append(rooms[event_id][i])
-                    rooms[event_id].remove(rooms[event_id][i])
+                for i in room:
+                    rooms[event_id].remove(i)
                 thr = Thread(target=game_funcs[event_id], args=(room,))
                 thr.start()
             else:

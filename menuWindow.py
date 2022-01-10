@@ -438,6 +438,20 @@ def brawlers_menu(user_data):
 def play(chosen_brawler, chosen_event, sock):
     sock.sendall(
         (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(chosen_brawler % 10) + Delimiter).encode())
+    message = sock.recv(16).decode()
+    while Delimiter not in message:
+        message += sock.recv(16).decode()
+    players, message = message.split(Delimiter)
+    players = players[len(CMD_PLAYERS_IN_ROOM):]
+    print(players)
+    while players.split('/')[0] != players.split('/')[1]:
+        print(1)
+        message += sock.recv(16).decode()
+        while Delimiter not in message:
+            message += sock.recv(16).decode()
+        players, message = message.split(Delimiter)
+        players = players[len(CMD_PLAYERS_IN_ROOM):]
+        print(players)
 
 
 def main(sock, login, password):
