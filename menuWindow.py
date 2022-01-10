@@ -1,10 +1,14 @@
 import os.path
+import socket
 import sys
+import time
 from json import loads
+from math import cos, sin, radians
+
 import pygame as pg
 
 from commands import *  # commands
-import socket
+from threading import Thread
 
 
 def get_player_info(sock):
@@ -28,6 +32,7 @@ CHOOSE_BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 CUPS_FONT = pg.font.Font('./data/mainFont.ttf', 30)
 POWER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 size = width, height = 1500, 700
+players = ''
 clock = pg.time.Clock()
 fps = 60
 screen = pg.display.set_mode(size)
@@ -436,21 +441,61 @@ def brawlers_menu(user_data):
 
 
 def play(chosen_brawler, chosen_event, sock):
-    sock.sendall(
-        (CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(chosen_brawler % 10) + Delimiter).encode())
+    global players
+    sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(
+        chosen_brawler % 10) + Delimiter).encode())
+    message = sock.recv(16).decode()
+    while Delimiter not in message:
+        message += sock.recv(16).decode()
+    players_, message = message.split(Delimiter)
+    players = players_[len(CMD_PLAYERS_IN_ROOM):]
+    print(players)
+    while players.split('/')[0] != players.split('/')[1]:
+        message += sock.recv(16).decode()
+        while Delimiter not in message:
+            message += sock.recv(16).decode()
+        players_, message = message.split(Delimiter)
+        players = players_[len(CMD_PLAYERS_IN_ROOM):]
+        print(players)
+        time.sleep(1)
+    return True
 
-    # до цикла
-    # players = ''
-    # message = ''
-    # sock.setblocking(False)
-    #
-    # в цикле
-    #     if players and players.split('/')[0] == players.split('/')[1]:
-    #         break
-    #     message += sock.recv(16).decode()
-    #     if Delimiter  in message:
-    #         players, message = message.split(Delimiter)
-    #         players = players[len(CMD_PLAYERS_IN_ROOM):]
+
+def search_window():
+    running = True
+    bg = pg.sprite.Group()
+    fg = pg.sprite.Group()
+    img = pg.sprite.Sprite()
+    img.image = load_image("load_in_game.png")
+    img.rect = img.image.get_rect()
+    img.rect.x, img.rect.y = 650, 250
+    background = pg.sprite.Sprite()
+    background.image = load_image("menu.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    bg.add(background)
+    fg.add(img)
+    radius = (180, 130)
+    xd = width // 2
+    yd = height // 2
+    angle = 0
+    _fps = 30
+    while running:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                running = False
+        screen.fill((30, 30, 30))
+        bg.draw(screen)
+        angle -= 2
+        points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
+                   yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
+        pg.draw.polygon(screen, color='black', points=points)
+        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2], yd - sin(radians(angle + i * 30)) * radius[i % 2])
+                  for i in range(12)]
+        pg.draw.polygon(screen, color=(251, 196, 8), points=points)
+        fg.draw(screen)
+        draw_outline(650, 50, "SEARCHING FOR PLAYERS", screen, BRAWLER_FONT)
+        draw_outline(650, 100, f"PLAYERS FOUND {players}", screen, BRAWLER_FONT)
+        pg.display.flip()
 
 
 def main(sock, login, password):
@@ -515,7 +560,10 @@ def main(sock, login, password):
         pg.display.flip()
         if play_button.is_over(pg.mouse.get_pos()):
             try:
-                play(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
+                thread_find = Thread(target=play, args=[user_data['brawlers'][current_brawler][-1], chosen_event, sock])
+                thread_window = Thread(target=search_window)
+                thread_window.start()
+                thread_find.start()
             except:
                 data = False
                 while not data:
