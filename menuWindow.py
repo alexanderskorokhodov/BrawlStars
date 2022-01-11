@@ -32,7 +32,6 @@ CHOOSE_BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 CUPS_FONT = pg.font.Font('./data/mainFont.ttf', 30)
 POWER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 size = width, height = 1500, 700
-players = ''
 clock = pg.time.Clock()
 fps = 60
 screen = pg.display.set_mode(size)
@@ -441,27 +440,11 @@ def brawlers_menu(user_data):
 
 
 def play(chosen_brawler, chosen_event, sock):
-    global players
     sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(
         chosen_brawler % 10) + Delimiter).encode())
-    message = sock.recv(16).decode()
-    while Delimiter not in message:
-        message += sock.recv(16).decode()
-    players_, message = message.split(Delimiter)
-    players = players_[len(CMD_PLAYERS_IN_ROOM):]
-    print(players)
-    while players.split('/')[0] != players.split('/')[1]:
-        message += sock.recv(16).decode()
-        while Delimiter not in message:
-            message += sock.recv(16).decode()
-        players_, message = message.split(Delimiter)
-        players = players_[len(CMD_PLAYERS_IN_ROOM):]
-        print(players)
-        time.sleep(1)
-    return True
 
 
-def search_window():
+def search_window(sock):
     running = True
     bg = pg.sprite.Group()
     fg = pg.sprite.Group()
@@ -479,10 +462,24 @@ def search_window():
     yd = height // 2
     angle = 0
     _fps = 30
+
+    players = ''
+    message = ''
+    sock.setblocking(False)
+
     while running:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 running = False
+
+        if players and players.split('/')[0] == players.split('/')[1]:
+             break
+        message += sock.recv(16).decode()
+        if Delimiter in message:
+            players, message = message.split(Delimiter)
+            players = players[len(CMD_PLAYERS_IN_ROOM):]
+
+
         screen.fill((30, 30, 30))
         bg.draw(screen)
         angle -= 2

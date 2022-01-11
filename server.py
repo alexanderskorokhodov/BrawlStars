@@ -122,7 +122,7 @@ def menu(sock, id, login):
                     event_id = int(mes[len(CMD_FIND_MATCH)])
                     brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
                     if check_player_brawler(login, brawler_id):
-                        rooms[event_id].append(login)
+                        rooms[event_id].append((login, brawler_id))
                         sock.sendall((CMD_PLAYERS_IN_ROOM + '1/10' + Delimiter).encode())
                         if len(rooms[event_id]) == 1:
                             match_finder(event_id)
@@ -150,7 +150,7 @@ def match_finder(event_id):
             if len(rooms[event_id]) >= amount_of_players_for_event[event_id]:
                 room = []
                 for i in range(amount_of_players_for_event[event_id]):
-                    players[rooms[event_id][i]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
+                    players[rooms[event_id][i][0]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
                     room.append(rooms[event_id][i])
                 for i in room:
                     rooms[event_id].remove(i)
@@ -160,10 +160,10 @@ def match_finder(event_id):
                 if len(rooms[event_id]) != number_of_players:
                     number_of_players = len(rooms[event_id])
                     for i in range(len(rooms[event_id])):
-                        players[rooms[event_id][i]].sendall(
+                        players[rooms[event_id][i][0]].sendall(
                             (CMD_PLAYERS_IN_ROOM + f'{number_of_players}/10' + Delimiter).encode())
         except ConnectionError:
-            close_connection(rooms[event_id][i])
+            close_connection(rooms[event_id][i][0])
             rooms[event_id].remove(rooms[event_id][i])
 
 
