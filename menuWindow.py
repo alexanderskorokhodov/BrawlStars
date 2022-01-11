@@ -1,14 +1,12 @@
 import os.path
 import socket
 import sys
-import time
 from json import loads
 from math import cos, sin, radians
 
 import pygame as pg
 
 from commands import *  # commands
-from threading import Thread
 
 
 def get_player_info(sock):
@@ -439,12 +437,10 @@ def brawlers_menu(user_data):
     return None
 
 
-def play(chosen_brawler, chosen_event, sock):
+def search_window(chosen_brawler, chosen_event, sock):
     sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(
         chosen_brawler % 10) + Delimiter).encode())
 
-
-def search_window(sock):
     running = True
     bg = pg.sprite.Group()
     fg = pg.sprite.Group()
@@ -473,10 +469,14 @@ def search_window(sock):
                 running = False
 
         if players and players.split('/')[0] == players.split('/')[1]:
-             break
-        message += sock.recv(16).decode()
+            break
+        try:
+            message += sock.recv(16).decode()
+        except BlockingIOError:
+            pass
         if Delimiter in message:
-            players, message = message.split(Delimiter)
+            players = message.split(Delimiter)[0]
+            message = Delimiter.join(message.split(Delimiter)[1:])
             players = players[len(CMD_PLAYERS_IN_ROOM):]
 
 
@@ -557,11 +557,8 @@ def main(sock, login, password):
         pg.display.flip()
         if play_button.is_over(pg.mouse.get_pos()):
             try:
-                thread_find = Thread(target=play, args=[user_data['brawlers'][current_brawler][-1], chosen_event, sock])
-                thread_window = Thread(target=search_window)
-                thread_window.start()
-                thread_find.start()
-            except:
+                search_window(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
+            except ZeroDivisionError:
                 data = False
                 while not data:
                     sock, data = server_error_window(login, password)

@@ -3,6 +3,7 @@ from commands import *  # commands
 from threading import Thread
 import sqlite3
 from json import dumps
+from time import sleep
 
 
 # for any func without log_in()
@@ -111,7 +112,6 @@ def menu(sock, id, login):
             return True
     try:
         player_info = get_player_info(login)
-        print(dumps(player_info))
         sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
         mes = sock.recv(10).decode()
         if len(mes) == 0:
@@ -157,11 +157,12 @@ def match_finder(event_id):
                 thr = Thread(target=game_funcs[event_id], args=(room,))
                 thr.start()
             else:
-                if len(rooms[event_id]) != number_of_players:
-                    number_of_players = len(rooms[event_id])
-                    for i in range(len(rooms[event_id])):
-                        players[rooms[event_id][i][0]].sendall(
-                            (CMD_PLAYERS_IN_ROOM + f'{number_of_players}/10' + Delimiter).encode())
+                # if len(rooms[event_id]) != number_of_players:
+                number_of_players = len(rooms[event_id])
+                for i in range(len(rooms[event_id])):
+                    players[rooms[event_id][i][0]].sendall(
+                        (CMD_PLAYERS_IN_ROOM + f'{number_of_players}/10' + Delimiter).encode())
+                sleep(1)
         except ConnectionError:
             close_connection(rooms[event_id][i][0])
             rooms[event_id].remove(rooms[event_id][i])
