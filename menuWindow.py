@@ -29,6 +29,7 @@ BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 70)
 CHOOSE_BRAWLER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
 CUPS_FONT = pg.font.Font('./data/mainFont.ttf', 30)
 POWER_FONT = pg.font.Font('./data/mainFont.ttf', 40)
+FIND_FONT = pg.font.Font('./data/mainFont.ttf', 50)
 size = width, height = 1500, 700
 clock = pg.time.Clock()
 fps = 60
@@ -479,10 +480,9 @@ def search_window(chosen_brawler, chosen_event, sock):
             message = Delimiter.join(message.split(Delimiter)[1:])
             players = players[len(CMD_PLAYERS_IN_ROOM):]
 
-
         screen.fill((30, 30, 30))
         bg.draw(screen)
-        angle -= 2
+        angle -= 3
         points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
                    yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
         pg.draw.polygon(screen, color='black', points=points)
@@ -490,9 +490,10 @@ def search_window(chosen_brawler, chosen_event, sock):
                   for i in range(12)]
         pg.draw.polygon(screen, color=(251, 196, 8), points=points)
         fg.draw(screen)
-        draw_outline(650, 50, "SEARCHING FOR PLAYERS", screen, BRAWLER_FONT)
-        draw_outline(650, 100, f"PLAYERS FOUND {players}", screen, BRAWLER_FONT)
+        draw_outline(470, 20, "SEARCHING FOR PLAYERS", screen, FIND_FONT)
+        draw_outline(520, 90, f"PLAYERS FOUND {players}", screen, FIND_FONT)
         pg.display.flip()
+        clock.tick(_fps)
 
 
 def main(sock, login, password):
