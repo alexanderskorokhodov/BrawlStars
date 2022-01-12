@@ -1,3 +1,4 @@
+import json
 import os.path
 import random
 import socket
@@ -126,6 +127,12 @@ def get_data():
     for i in input_boxes:
         data.append(i.text)
     return data
+
+
+def write_credentials(login, password):
+    credentials = {'login': login, 'password': password}
+    with open(file='data/credentials.json', mode='w') as file:
+        json.dump(credentials, file)
 
 
 def check_reg_data():
@@ -359,8 +366,17 @@ def main():
             if not server_error_window():
                 quit()
     # login screen
+    if os.path.exists('data/credentials.json'):
+        with open(file='data/credentials.json', mode='r') as file:
+            credentials = json.load(file)
+        login, password = credentials['login'], credentials['password']
+        sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
+        message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
+        if message == CMD_RIGHT_PASSWORD:
+            return True, sock, login, password
     res, login, password = login_reg_window(sock)
     if res:
+        write_credentials(login, password)
         return True, sock, login, password
     return False, None
 
