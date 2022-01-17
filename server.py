@@ -4,6 +4,7 @@ from threading import Thread
 import sqlite3
 from json import dumps
 from time import sleep
+from pygame.sprite import Group
 
 
 # for any func without log_in()
@@ -144,6 +145,7 @@ def menu(sock, id, login):
 
 
 def match_finder(event_id):
+    sleep(1)
     number_of_players = len(rooms[event_id])
     while rooms[event_id]:
         try:
@@ -169,7 +171,26 @@ def match_finder(event_id):
 
 
 def showdown_game(room):
+    from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly
+    print(room)
     print('game_starts')
+
+    map_name = 'RockwallBrawl.txt'
+    brawlers = {}  # {login : BrawlerClass}
+    players_start_cords = [((5 + i * 5) * cell_size, 5 * cell_size) for i in range(len(room))]
+    brawlers_group = Group()
+
+    # map import
+    with open('data/maps/' + map_name):
+
+
+    # import brawlers
+    con = sqlite3.connect("BrawlStars.db")
+    cur = con.cursor()
+    for i in room:
+        brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
+        if brawler_name == 'shelly':
+            brawlers[i[0]] = Shelly(players_start_cords[i][0], players_start_cords[i][1], brawlers_group)
 
 
 if __name__ == '__main__':
@@ -183,7 +204,7 @@ if __name__ == '__main__':
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
     players = {}  # players[player_login] = player socket
-    amount_of_players_for_event = {0: 10}  # amount_of_players_for_event[event_id] = amount_of_players
+    amount_of_players_for_event = {0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:

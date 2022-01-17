@@ -458,7 +458,7 @@ def search_window(chosen_brawler, chosen_event, sock):
     xd = width // 2
     yd = height // 2
     angle = 0
-    _fps = 30
+    _fps = 60
 
     players = ''
     message = ''
@@ -482,7 +482,7 @@ def search_window(chosen_brawler, chosen_event, sock):
 
         screen.fill((30, 30, 30))
         bg.draw(screen)
-        angle -= 3
+        angle -= 2
         points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
                    yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
         pg.draw.polygon(screen, color='black', points=points)
