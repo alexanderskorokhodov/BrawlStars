@@ -22,9 +22,9 @@ def load_image(name, color_key=None):
 
 
 class Brawler(pygame.sprite.Sprite):
-    def __init__(self, x_, y_, name, health, level, number_of_attack, reload):
+    def __init__(self, x_, y_, name, health, level):
         super().__init__()
-        self.image = pygame.transform.scale(load_image(f"brawlers/gaming{name}.png"), (50, 50))
+        self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"), (50, 50))
         self.rect = self.image.get_rect()
         self.name = name
         self.rect.x, self.rect.y = x_, y_
@@ -70,18 +70,15 @@ class Brawler(pygame.sprite.Sprite):
 
 
 class Shelly(Brawler):
-    def __init__(self, x, y, level):
+    def __init__(self, x, y, level=10):
         super().__init__(x, y, 'Shelly', 3600, level)
 
 
 class Colt(Brawler):
     def __init__(self, x, y, level):
-        super(Colt, self).__init__(x, y, 'Colt', 2800, level)
+        super().__init__(x, y, 'Colt', 2800, level)
 
 
 class Bull(Brawler):
-    def __init__(self, x, y):
-        super(Colt, self).__init__(x, y, 'Bull', 5000)
-
-
-
+    def __init__(self, x, y, level=10):
+        super().__init__(x, y, 'Bull', 5000, level)

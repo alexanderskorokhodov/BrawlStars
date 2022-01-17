@@ -26,8 +26,7 @@ FPS = 50
 
 
 def terminate():
-    pygame.quit()
-    sys.exit()
+    return True
 
 
 def get_brawler():
@@ -110,7 +109,7 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(*pos_x, tile_height * pos_y)
 
 
-def main():
+def main(sock):
     global ev
     pygame.init()
     x_shoot, y_shoot = width - 150, height - 150
@@ -130,7 +129,7 @@ def main():
         screen.fill((0, 0, 0))
         for event in ev:
             if event.type == pygame.QUIT:
-                terminate()
+                return terminate()
         mouse_buttons = pygame.mouse.get_pressed()
         tiles_group.draw(screen)
         x, y = pygame.mouse.get_pos()
