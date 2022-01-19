@@ -441,7 +441,7 @@ def brawlers_menu(user_data):
 def search_window(chosen_brawler, chosen_event, sock):
     sock.sendall((CMD_FIND_MATCH + str(chosen_event) + str(chosen_brawler // 10) + str(
         chosen_brawler % 10) + Delimiter).encode())
-    return True
+
     running = True
     bg = pg.sprite.Group()
     fg = pg.sprite.Group()
