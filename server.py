@@ -184,7 +184,7 @@ def showdown_game(room: list):
     for player in room:
         players[player[0]].setblocking(False)
         try:
-            players[player[0]].sendall(CMD_GAME_map + map_name + Delimiter)
+            players[player[0]].sendall((CMD_GAME_map + map_name + Delimiter).encode())
         except ConnectionError:
             close_connection(player[0])
             room.remove(player)
