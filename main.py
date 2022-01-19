@@ -1,6 +1,11 @@
 import menuWindow
 import startWindow
 
-res, sock, login, password = startWindow.main()
-if res:
-    menuWindow.main(sock, login, password)
+
+run = True
+while run:
+    run, sock, login, password = startWindow.main()
+    run, sock = menuWindow.main(sock, login, password)
+    if run:
+        import game
+        game.main(sock)
