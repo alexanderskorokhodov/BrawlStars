@@ -46,6 +46,7 @@ def log_in(sock, id):
 
     try:
         print('connected with ' + str(id))
+        sock.setblocking(True)
         successful_authorization = False
         while not successful_authorization:
             mes = sock.recv(4).decode()
@@ -113,6 +114,7 @@ def menu(sock, id, login):
             return True
     try:
         player_info = get_player_info(login)
+        sock.setblocking(True)
         sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
         mes = sock.recv(10).decode()
         if len(mes) == 0:
@@ -170,27 +172,51 @@ def match_finder(event_id):
             rooms[event_id].remove(rooms[event_id][i])
 
 
-def showdown_game(room):
+def showdown_game(room: list):
+
+    # init
     from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly
     print(room)
     print('game_starts')
 
     map_name = 'RockwallBrawl.txt'
+
+    for player in room:
+        players[player[0]].setblocking(False)
+        try:
+            players[player[0]].sendall(CMD_GAME_map + map_name + Delimiter)
+        except ConnectionError:
+            close_connection(player[0])
+            room.remove(player)
+
     brawlers = {}  # {login : BrawlerClass}
-    players_start_cords = [((5 + i * 5) * cell_size, 5 * cell_size) for i in range(len(room))]
+    players_start_cords = []  # [(x, y)]
+
     brawlers_group = Group()
+    walls_group = Group()
+    breakable_blocks = Group()
 
     # map import
-    with open('data/maps/' + map_name):
+    with open('data/maps/' + map_name) as file:
+        lines = file.readlines()
+    for x in range(len(lines)):
+        for y in range(len(lines[x])):
+            if lines[x][y] == 'X':
+                Bush(x * cell_size, y * cell_size, breakable_blocks)
+            elif lines[x][y] == '#':
+                Wall(x * cell_size, y * cell_size, walls_group, breakable_blocks)
+            elif lines[x][y] == 'P':
+                players_start_cords.append((x * cell_size, y * cell_size))
 
 
     # import brawlers
     con = sqlite3.connect("BrawlStars.db")
     cur = con.cursor()
-    for i in room:
+    for index, i in enumerate(room):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
         if brawler_name == 'shelly':
-            brawlers[i[0]] = Shelly(players_start_cords[i][0], players_start_cords[i][1], brawlers_group)
+            brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], brawlers_group)
+    print(brawlers['sasha'].speed)
 
 
 if __name__ == '__main__':
