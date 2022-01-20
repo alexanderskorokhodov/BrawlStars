@@ -10,4 +10,5 @@ CMD_PLAYER_INFO_IN_MENU = 'meninf'
 CMD_FIND_MATCH = 'match' + Delimiter
 CMD_PLAYERS_IN_ROOM = 'room'
 CMD_GAME_map = 'map'
-CMD_GAME_moove = 'm'
+CMD_GAME_move = 'm'
+CMD_GAME_attack = 'a'

@@ -4,13 +4,14 @@ from threading import Thread
 import sqlite3
 from json import dumps
 from time import sleep
-from pygame.sprite import Group
+from pygame.sprite import Group, spritecollideany
+from pygame.time import Clock
 
 
 # for any func without log_in()
 def close_connection(login):
-    players[login].close()
-    del players[login]
+    players_sockets[login].close()
+    del players_sockets[login]
     print('disconnected with ' + login)
 
 
@@ -83,7 +84,7 @@ def log_in(sock, id):
                 break
 
         if successful_authorization:
-            players[login] = sock
+            players_sockets[login] = sock
             menu(sock, id, login)
     except ConnectionError:
         sock.close()
@@ -154,7 +155,7 @@ def match_finder(event_id):
             if len(rooms[event_id]) >= amount_of_players_for_event[event_id]:
                 room = []
                 for i in range(amount_of_players_for_event[event_id]):
-                    players[rooms[event_id][i][0]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
+                    players_sockets[rooms[event_id][i][0]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
                     room.append(rooms[event_id][i])
                 for i in room:
                     rooms[event_id].remove(i)
@@ -164,7 +165,7 @@ def match_finder(event_id):
                 # if len(rooms[event_id]) != number_of_players:
                 number_of_players = len(rooms[event_id])
                 for i in range(len(rooms[event_id])):
-                    players[rooms[event_id][i][0]].sendall(
+                    players_sockets[rooms[event_id][i][0]].sendall(
                         (CMD_PLAYERS_IN_ROOM + f'{number_of_players}/10' + Delimiter).encode())
                 sleep(1)
         except ConnectionError:
@@ -182,15 +183,17 @@ def showdown_game(room: list):
     map_name = 'RockwallBrawl.txt'
 
     for player in room:
-        players[player[0]].setblocking(False)
+        players_sockets[player[0]].setblocking(False)
         try:
-            players[player[0]].sendall((CMD_GAME_map + map_name + Delimiter).encode())
+            players_sockets[player[0]].sendall((CMD_GAME_map + map_name + Delimiter).encode())
         except ConnectionError:
             close_connection(player[0])
             room.remove(player)
 
     brawlers = {}  # {login : BrawlerClass}
     players_start_cords = []  # [(x, y)]
+    players_alive = []
+    players_commands = {}
 
     brawlers_group = Group()
     walls_group = Group()
@@ -216,7 +219,39 @@ def showdown_game(room: list):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
         if brawler_name == 'shelly':
             brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], brawlers_group)
-    print(brawlers['sasha'].speed)
+        players_alive.append(i[0])
+        players_commands[i[0]] = ''
+
+    # game part
+    running = True
+    clock = Clock()
+    tickrate = 64
+    while running:
+
+        # end of game condition
+        #if len(players_alive) <= 1:
+        #    running = False
+
+        for player_login in players_alive:
+            try:
+                players_commands[player_login] += players_sockets[player_login].recv(8).decode()
+            except BlockingIOError:
+                pass
+            if Delimiter in players_commands[player_login]:  # maybe optimise
+                command, extra = players_commands[player_login].split(Delimiter)
+                players_commands[player_login] = Delimiter.join(extra)
+                if command.startswith(CMD_GAME_move):
+                    if not spritecollideany(brawlers[player_login], walls_group):
+                        move_type = int(command[1])
+                        brawlers[player_login].move(move_type)
+
+        #clock.tick(tickrate)
+        print(clock.tick(tickrate))
+
+
+
+    # end of game
+
 
 
 if __name__ == '__main__':
@@ -229,7 +264,7 @@ if __name__ == '__main__':
 
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
-    players = {}  # players[player_login] = player socket
+    players_sockets = {}  # players[player_login] = player socket
     amount_of_players_for_event = {0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
