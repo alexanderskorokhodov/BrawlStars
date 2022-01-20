@@ -8,4 +8,4 @@ while run:
     run, sock, extra_message = menuWindow.main(sock, login, password)
     if run:
         import mainGame
-        mainGame.main(sock, extra_message)
+        mainGame.main(sock, extra_message, login)
