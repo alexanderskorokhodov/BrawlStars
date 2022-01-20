@@ -58,6 +58,14 @@ def get_cords():
     return 100, 100  # fix
 
 
+def send_attack(angle):
+    pass
+
+
+def send_shift(x, y):
+    return x, y  # player cords
+
+
 def load_map(map_name):
     filename = "data/maps/" + map_name + '.txt'
     with open(filename, 'r') as mapFile:
@@ -117,10 +125,6 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(*pos_x, tile_height * pos_y)
 
 
-def send_attack():
-    pass
-
-
 def main(sock):
     global ev
     pygame.init()
@@ -146,6 +150,8 @@ def main(sock):
         x, y = pygame.mouse.get_pos()
         # get shift x, y
         _x, _y = player.update(x_shoot, y_shoot, x, y, mouse_buttons)
+        # send shift
+        _x, _y = send_shift(_x, _y)
         # camera and player pos
         if (_x > 0 and player.rect.x + _x >= width // 2 and
             bottom_right_tile.rect.x + bottom_right_tile.rect.width >= width) or (
@@ -166,7 +172,7 @@ def main(sock):
         player_group.draw(screen)
         # draw controller
         if player.is_shoot:
-            send_attack()
+            send_attack(player.angle)
             pygame.draw.line(screen, pygame.Color("RED"), (player.rect.x + 25, player.rect.y + 25),
                              (player.rect.x + cos(player.angle) * 100 + 25,
                               player.rect.y + sin(player.angle) * 100 + 25),

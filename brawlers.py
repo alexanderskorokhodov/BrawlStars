@@ -51,12 +51,6 @@ class Brawler(pygame.sprite.Sprite):
             self.is_shoot = True
         else:
             self.is_shoot = False
-        _x, _y = self.move(_x * velocity, _y * velocity)
-        # self.rect.move_ip(_x, _y)
-        return _x, _y
-
-    def move(self, _x, _y):
-        # fix
         return _x, _y
 
     def update_angle(self, x_shoot, y_shoot, x, y):
