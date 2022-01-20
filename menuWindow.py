@@ -470,7 +470,9 @@ def search_window(chosen_brawler, chosen_event, sock):
                 running = False
 
         if players and players.split('/')[0] == players.split('/')[1]:
-            return True
+            if message:
+                return True, message
+            return True, ''
         try:
             message += sock.recv(16).decode()
         except BlockingIOError:
@@ -545,7 +547,7 @@ def main(sock, login, password):
         ev = pg.event.get()
         for event in ev:
             if event.type == pg.QUIT:
-                return False, sock
+                return False, sock, ''
         screen.fill((30, 30, 30))
         bg_sprites.draw(screen)
         user_button.draw(screen, outline=pg.Color("BLACK"))
@@ -558,9 +560,9 @@ def main(sock, login, password):
         pg.display.flip()
         if play_button.is_over(pg.mouse.get_pos()):
             try:
-                res = search_window(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
+                res, extra_message = search_window(user_data['brawlers'][current_brawler][-1], chosen_event, sock)
                 if res:
-                    return True, sock
+                    return True, sock, extra_message
             except ZeroDivisionError:
                 data = False
                 while not data:
@@ -570,4 +572,4 @@ def main(sock, login, password):
             if chosen_brawler:
                 current_brawler = chosen_brawler
         clock.tick(fps)
-    return False, sock
+    return False, sock, ''

@@ -4,6 +4,56 @@ import pygame.sprite
 
 from brawlers import *
 from commands import *
+from json import loads
+
+
+class MessageCatcherSender:
+
+    def __init__(self, sock, extra_message):
+        self.socket = sock
+        self.commands = []
+        self.extra_text = extra_message
+        self.setblocking(True)
+
+    def setblocking(self, value):
+        self.socket.setblocking(value)
+
+    def send_message(self, message: str):
+        self.socket.sendall(message.encode())
+
+    def get_message(self):
+        if len(self.commands) == 0:
+            while Delimiter not in self.extra_text:
+                self.extra_text += self.socket.recv(64).decode()
+            print(self.extra_text)
+            command = self.extra_text.split(Delimiter)[0]
+            self.extra_text = self.extra_text.split(Delimiter)[1:]
+            for i in range(len(self.extra_text)):
+                if i != len(self.extra_text) - 1:
+                    self.commands.append(self.extra_text[i])
+            if len(self.extra_text):
+                self.extra_text = self.extra_text[-1]
+            return command
+        else:
+            command = self.commands[0]
+            self.commands.pop(0)
+            return command
+
+
+    def get_map_name(self):
+        message = self.get_message()
+        if message.startswith(CMD_GAME_map):
+            return message[len(CMD_GAME_map):]
+        else:
+            raise Exception(f'другая команда в очереди, напиши Сане ({message})')
+
+    def get_brawlers(self):
+        message = self.get_message()
+        if message.startswith(CMD_GAME_players_brawlers_info):
+            info = loads(message[len(CMD_GAME_players_brawlers_info):])
+            return info
+        else:
+            raise Exception(f'другая команда в очереди, напиши Сане ({message})')
 
 
 def load_image(name, color_key=None):
@@ -147,7 +197,12 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(*pos_x, tile_height * pos_y)
 
 
-def main(sock):
+def main(sock, extra_message):
+
+    s = MessageCatcherSender(sock, extra_message)
+    print(s.get_map_name())
+    print(s.get_brawlers())
+
     global ev
     pygame.init()
     x_shoot, y_shoot = width - 150, height - 150

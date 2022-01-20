@@ -218,9 +218,18 @@ def showdown_game(room: list):
     for index, i in enumerate(room):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
         if brawler_name == 'shelly':
-            brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], brawlers_group)
+            brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], i[0], brawlers_group)
         players_alive.append(i[0])
         players_commands[i[0]] = ''
+
+    # send brawlers info to players
+    info = {}  # {login: [brawler_name, (x, y)]}
+    for brawler in brawlers_group:
+        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top)]
+    info = dumps(info)
+    for player_login in players_alive:
+        players_sockets[player_login].sendall((CMD_GAME_players_brawlers_info + info + Delimiter).encode())
+
 
     # game part
     running = True
@@ -232,21 +241,24 @@ def showdown_game(room: list):
         #if len(players_alive) <= 1:
         #    running = False
 
-        for player_login in players_alive:
+        for i in range(len(players_alive) - 1, -1, -1):
             try:
-                players_commands[player_login] += players_sockets[player_login].recv(8).decode()
+                players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(8).decode()
+            except ConnectionError:
+                close_connection(players_alive[i])
+                players_alive.pop(i)
             except BlockingIOError:
                 pass
-            if Delimiter in players_commands[player_login]:  # maybe optimise
-                command, extra = players_commands[player_login].split(Delimiter)
-                players_commands[player_login] = Delimiter.join(extra)
+            if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
+                command, extra = players_commands[players_alive[i]].split(Delimiter)
+                players_commands[players_alive[i]] = Delimiter.join(extra)
                 if command.startswith(CMD_GAME_move):
-                    if not spritecollideany(brawlers[player_login], walls_group):
+                    if not spritecollideany(brawlers[players_alive[i]], walls_group):
                         move_type = int(command[1])
-                        brawlers[player_login].move(move_type)
+                        brawlers[players_alive[i]].move(move_type)
 
-        #clock.tick(tickrate)
-        print(clock.tick(tickrate))
+        clock.tick(tickrate)
+        # print(clock.tick(tickrate))
 
 
 
