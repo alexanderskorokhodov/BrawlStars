@@ -96,6 +96,32 @@ class Brawler(Sprite):
             exec(f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers WHERE name = \'{name}\'").fetchone()[0]')
         con.close()
 
+    def move(self, type_of_move):
+        # type_of_move - число от 0 до 7, обозначает направление как в компасе начиная с севера по часовой
+        # то есть 0 - вверх, 1 - вверх и вправо, 2 - вправо и тд
+        x, y = 0, 0
+        if type_of_move == 0:
+            y = -1 * self.speed
+        elif type_of_move == 1:
+            x = round(self.speed / 2 ** (1 / 2))
+            y = -1 * round(self.speed / 2 ** (1 / 2))
+        elif type_of_move == 2:
+            x = self.speed
+        elif type_of_move == 3:
+            x = round(self.speed / 2 ** (1 / 2))
+            y = round(self.speed / 2 ** (1 / 2))
+        elif type_of_move == 4:
+            y = self.speed
+        elif type_of_move == 5:
+            x = -1 * round(self.speed / 2 ** (1 / 2))
+            y = round(self.speed / 2 ** (1 / 2))
+        elif type_of_move == 6:
+            x = -1 * self.speed
+        elif type_of_move == 7:
+            x = -1 * round(self.speed / 2 ** (1 / 2))
+            y = -1 * round(self.speed / 2 ** (1 / 2))
+        self.rect.move(x, y)
+
 
 class Shelly(Brawler):
 
