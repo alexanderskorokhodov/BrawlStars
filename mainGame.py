@@ -3,6 +3,7 @@ from math import cos, sin
 import pygame.sprite
 
 from brawlers import *
+from commands import *
 
 
 def load_image(name, color_key=None):
@@ -58,12 +59,33 @@ def get_cords():
     return 100, 100  # fix
 
 
-def send_attack(angle):
-    pass
+def send_attack(sock, angle):
+    sock.sendall((CMD_GAME_attack + str(angle) + Delimiter).encode())
 
 
-def send_shift(x, y):
-    return x, y  # player cords
+def send_move(sock, x, y):
+    if x and y:
+        return
+    if x == 0:
+        if y == 1:
+            type_of_move = 4
+        elif y == -1:
+            type_of_move = 0
+    elif y == 0:
+        if x == 1:
+            type_of_move = 2
+        elif x == -1:
+            type_of_move = 6
+    else:
+        if x == 1 and y == 1:
+            type_of_move = 3
+        elif x == 1 and y == -1:
+            type_of_move = 1
+        elif x == -1 and y == 1:
+            type_of_move = 5
+        elif x == -1 and y == -1:
+            type_of_move = 7
+    sock.sendall((CMD_GAME_move + str(type_of_move) + Delimiter).encode())
 
 
 def load_map(map_name):
@@ -151,7 +173,7 @@ def main(sock):
         # get shift x, y
         _x, _y = player.update(x_shoot, y_shoot, x, y, mouse_buttons)
         # send shift
-        _x, _y = send_shift(_x, _y)
+        _x, _y = send_move(sock, _x, _y)
         # camera and player pos
         if (_x > 0 and player.rect.x + _x >= width // 2 and
             bottom_right_tile.rect.x + bottom_right_tile.rect.width >= width) or (
@@ -172,7 +194,7 @@ def main(sock):
         player_group.draw(screen)
         # draw controller
         if player.is_shoot:
-            send_attack(player.angle)
+            send_attack(sock, player.angle)
             pygame.draw.line(screen, pygame.Color("RED"), (player.rect.x + 25, player.rect.y + 25),
                              (player.rect.x + cos(player.angle) * 100 + 25,
                               player.rect.y + sin(player.angle) * 100 + 25),
