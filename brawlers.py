@@ -6,6 +6,7 @@ import pygame
 
 cell_size = 50
 
+
 def load_image(name, color_key=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -34,7 +35,6 @@ class Brawler(pygame.sprite.Sprite):
         self.is_super = False
         self.max_health = health + (level - 1) * (health // 20)
         self.current_health = self.max_health
-
 
     def update_angle(self, x_shoot, y_shoot, x, y):
         hip = sqrt((x_shoot - x) ** 2 + (y_shoot - y) ** 2)
