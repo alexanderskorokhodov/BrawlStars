@@ -240,48 +240,58 @@ def showdown_game(room: list):
     while running:
 
         # end of game condition
-        if len(brawlers_group) <= 1:
-            print('game_ends')
-            running = False
+        # if len(brawlers_group) <= 1:
+        #     print('game_ends')
+        #     running = False
 
         changes = {}
         for i in range(len(players_alive) - 1, -1, -1):
             try:
                 players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(8).decode()
+                if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
+                    try:
+                        command, extra = players_commands[players_alive[i]].split(Delimiter)
+                        # print(command)
+                    except ValueError as e:
+                        print(players_commands[players_alive[i]])
+                        raise e
+                    players_commands[players_alive[i]] = Delimiter.join(extra)
+                    if command.startswith(CMD_GAME_move):
+                        try:
+                            move_type = int(command[1])
+                            x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
+                                                                                         tickrate)
+                            brawlers[players_alive[i]].move(x, 0)
+                            if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                brawlers[players_alive[i]].move(-x, 0)
+                                x = 0
+                            brawlers[players_alive[i]].move(0, y)
+                            if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                brawlers[players_alive[i]].move(0, -y)
+                                y = 0
+                            if x or y:
+                                print(brawlers[players_alive[i]].rect.center)
+                                if players_alive[i] not in changes:
+                                    changes[players_alive[i]] = {}
+                                changes[players_alive[i]]['move'] = (x, y)
+                        except ValueError:
+                            print(command)
+                            raise ValueError(command)
             except ConnectionError:
                 close_connection(players_alive[i])
                 players_alive.pop(i)
             except BlockingIOError:
                 pass
-            if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
-                try:
-                    command, extra = players_commands[players_alive[i]].split(Delimiter)
-                    print(command)
-                except ValueError as e:
-                    print(players_commands[players_alive[i]])
-                    raise e
-                players_commands[players_alive[i]] = Delimiter.join(extra)
-                if command.startswith(CMD_GAME_move):
-                    if not spritecollideany(brawlers[players_alive[i]], walls_group):
-                        try:
-                            move_type = int(command[1])
-                        except ValueError:
-                            print(command)
-                        cords = brawlers[players_alive[i]].move(move_type)
-                        if players_alive[i] not in changes:
-                            changes[players_alive[i]] = {}
-                        changes[players_alive[i]]['move'] = cords
-
 
         # sending changes to players
-        message = (CMD_GAME_changes + dumps(changes) + Delimiter).encode()
-        print(message)
-        for i in range(len(players_alive) - 1, -1, -1):
-            try:
-                players_sockets[players_alive[i]].sendall(message)
-            except ConnectionError:
-                close_connection(players_alive[i])
-                players_alive.pop(i)
+        if changes:
+            message = (CMD_GAME_changes + dumps(changes) + Delimiter).encode()
+            for i in range(len(players_alive) - 1, -1, -1):
+                try:
+                    players_sockets[players_alive[i]].sendall(message)
+                except ConnectionError:
+                    close_connection(players_alive[i])
+                    players_alive.pop(i)
 
         # tickrate
         clock.tick(tickrate)

@@ -23,16 +23,24 @@ class MessageCatcherSender:
 
     def get_message(self):
         if len(self.commands) == 0:
-            while Delimiter not in self.extra_text:
-                self.extra_text += self.socket.recv(64).decode()
-            command = self.extra_text.split(Delimiter)[0]
-            self.extra_text = self.extra_text.split(Delimiter)[1:]
-            for i in range(len(self.extra_text)):
-                if i != len(self.extra_text) - 1:
-                    self.commands.append(self.extra_text[i])
-            if len(self.extra_text):
-                self.extra_text = self.extra_text[-1]
-            return command
+            try:
+                message = self.socket.recv(64).decode()
+                if message:
+                    self.extra_text += message
+                    while Delimiter not in self.extra_text:
+                        self.extra_text += self.socket.recv(64).decode()
+                    command = self.extra_text.split(Delimiter)[0]
+                    self.extra_text = self.extra_text.split(Delimiter)[1:]
+                    for i in range(len(self.extra_text)):
+                        if i != len(self.extra_text) - 1:
+                            self.commands.append(self.extra_text[i])
+                    if len(self.extra_text):
+                        self.extra_text = self.extra_text[-1]
+                    return command
+                else:
+                    return ''
+            except BlockingIOError:
+                return ''
         else:
             command = self.commands[0]
             self.commands.pop(0)
@@ -55,10 +63,13 @@ class MessageCatcherSender:
 
     def get_brawlers_changes(self):
         message = self.get_message()
+        if not message:
+            return ''
         if message.startswith(CMD_GAME_changes):
             info = loads(message[len(CMD_GAME_changes):])
             return info
         else:
+            print(message)
             raise Exception(f'другая команда в очереди, напиши Сане ({message})')
 
 
@@ -228,25 +239,29 @@ def main(sock, extra_message, login):
 
         # get changes
         changes = msc.get_brawlers_changes()
-        print(changes)
         remake_shift = False
-        if login in changes:
-            if 'move' in changes[login]:
-                remake_shift = True
-        for nick in changes.keys():
-            for to_change in changes[nick].keys():
-                if to_change == 'move':
-                    brawlers_from_nick[nick].rect.move(changes[nick][to_change])
+        if changes:
+            print(changes)
+            if login in changes:
+                if 'move' in changes[login]:
+                    remake_shift = True
+            for nick in changes.keys():
+                for to_change in changes[nick].keys():
+                    if to_change == 'move':
+                        #print(brawlers_from_nick[nick].rect.center, changes[nick][to_change], end=', ')
+                        print(1)
+                        brawlers_from_nick[nick].move(changes[nick][to_change])
+                        #print(brawlers_from_nick[nick].rect.center)
 
         #shift remaking
-        if remake_shift:
-            new_x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
-            new_y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
-            if new_x_shift != x_shift or new_y_shift != y_shift:
-                for nick in brawlers_from_nick.keys():
-                    brawlers_from_nick[nick].rect.move(x_shift - new_x_shift, y_shift - new_y_shift)
-                x_shift = new_x_shift
-                y_shift = new_y_shift
+        # if remake_shift:
+        #     new_x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
+        #     new_y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
+        #     if new_x_shift != x_shift or new_y_shift != y_shift:
+        #         for nick in brawlers_from_nick.keys():
+        #             brawlers_from_nick[nick].rect.move(x_shift - new_x_shift, y_shift - new_y_shift)
+        #         x_shift = new_x_shift
+        #         y_shift = new_y_shift
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)

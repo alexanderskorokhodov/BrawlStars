@@ -98,32 +98,35 @@ class Brawler(Sprite):
         self.power = cur.execute(f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[0]
         con.close()
 
-    def move(self, type_of_move):
+    def from_type_of_move_to_cords(self, type_of_move, tickrate):
         # type_of_move - число от 0 до 7, обозначает направление как в компасе начиная с севера по часовой
         # то есть 0 - вверх, 1 - вверх и вправо, 2 - вправо и тд
         x, y = 0, 0
         if type_of_move == 0:
-            y = -1 * self.speed
+            y = -1 * self.speed // tickrate
         elif type_of_move == 1:
-            x = round(self.speed / 2 ** (1 / 2))
-            y = -1 * round(self.speed / 2 ** (1 / 2))
+            x = self.speed // tickrate / 2 ** (1 / 2)
+            y = -1 * self.speed // tickrate / 2 ** (1 / 2)
         elif type_of_move == 2:
-            x = self.speed
+            x = self.speed // tickrate
         elif type_of_move == 3:
-            x = round(self.speed / 2 ** (1 / 2))
-            y = round(self.speed / 2 ** (1 / 2))
+            x = self.speed // tickrate / 2 ** (1 / 2)
+            y = self.speed // tickrate / 2 ** (1 / 2)
         elif type_of_move == 4:
-            y = self.speed
+            y = self.speed // tickrate
         elif type_of_move == 5:
-            x = -1 * round(self.speed / 2 ** (1 / 2))
-            y = round(self.speed / 2 ** (1 / 2))
+            x = -1 * self.speed // tickrate / 2 ** (1 / 2)
+            y = self.speed // tickrate / 2 ** (1 / 2)
         elif type_of_move == 6:
-            x = -1 * self.speed
+            x = -1 * self.speed // tickrate
         elif type_of_move == 7:
-            x = -1 * round(self.speed / 2 ** (1 / 2))
-            y = -1 * round(self.speed / 2 ** (1 / 2))
-        self.rect.move(x, y)
-        return x, y
+            x = -1 * self.speed // tickrate / 2 ** (1 / 2)
+            y = -1 * self.speed // tickrate / 2 ** (1 / 2)
+        return round(x), round(y)
+
+    def move(self, x, y):
+        self.rect.x += x
+        self.rect.y += y
 
 
 class Shelly(Brawler):
