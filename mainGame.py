@@ -65,14 +65,14 @@ class Map(pygame.sprite.Sprite):
         self.field = load_map(map_name)
         self.width = len(self.field[0])
         self.height = len(self.field)
-        self.cell_size = 50
+        self.cell_size = 100
 
     def draw_tiles(self, x_shift, y_shift, screen):
         tiles_group = pygame.sprite.Group()
         for i in range(self.height):
             for j in range(self.width):
                 tile = pygame.sprite.Sprite()
-                tile.image = pygame.transform.scale(load_image(tile_images[tile_decode[self.field[i][j]]]),
+                tile.image = pygame.transform.scale(tile_images[tile_decode[self.field[i][j]]],
                                                     (self.cell_size, self.cell_size))
                 tile.rect = tile.image.get_rect()
                 tile.rect.x, tile.rect.y = j * self.cell_size + x_shift, i * self.cell_size + y_shift
@@ -196,7 +196,7 @@ def main(sock, extra_message, login):
     # get data
     # shift objects
     player.rect.x, player.rect.y = all_players_data[login][1]
-    x_shift, y_shift = - width // 2 + player.rect.x, -height // 2 + player.rect.y
+    x_shift, y_shift = width // 2 + player.rect.x, height // 2 + player.rect.y
     player_group = pygame.sprite.Group()
     player_group.add(player)
     for nick in all_players_data:

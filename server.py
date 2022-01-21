@@ -250,7 +250,12 @@ def showdown_game(room: list):
             except BlockingIOError:
                 pass
             if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
-                command, extra = players_commands[players_alive[i]].split(Delimiter)
+                try:
+                    command, extra = players_commands[players_alive[i]].split(Delimiter)
+                    print(command)
+                except ValueError as e:
+                    print(players_commands[players_alive[i]])
+                    raise e
                 players_commands[players_alive[i]] = Delimiter.join(extra)
                 if command.startswith(CMD_GAME_move):
                     if not spritecollideany(brawlers[players_alive[i]], walls_group):
