@@ -1,10 +1,46 @@
 from json import loads
 from math import cos, sin, degrees
 
-import pygame
-
 from brawlers import *
 from commands import *
+
+
+class CrossHair:
+
+    def __init__(self, screen, attack_length, attack_width, player_size):
+        self.screen = screen
+        self.x_shoot, self.y_shoot = width - 150, height - 150
+        self.attack_length = attack_length
+        self.attack_width = attack_width
+        self.cell_size = player_size
+        self.controller_size = 50
+
+    def draw(self, x, y, player, sock):
+        player.update_angle(self.x_shoot, self.y_shoot, x, y)  # update angle
+
+        pygame.draw.circle(self.screen, pygame.Color("WHITE"), (player.rect.centerx, player.rect.centery),
+                           self.cell_size, width=2)  # player outline
+
+        # draw attack
+        if pygame.mouse.get_pressed()[0]:
+            send_attack(sock, round(degrees(player.angle)))
+            pygame.draw.line(self.screen, "RED", (player.rect.centerx, player.rect.centery), (
+                player.rect.centerx + cos(player.angle) * self.attack_length,
+                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+        else:
+            pygame.draw.line(self.screen, "WHITE", (player.rect.centerx, player.rect.centery), (
+                player.rect.centerx + cos(player.angle) * self.attack_length,
+                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+
+        # draw controller
+        pygame.draw.circle(self.screen, "RED", (self.x_shoot, self.y_shoot),
+                           self.controller_size, width=1)
+        if self.controller_size ** 2 >= (self.x_shoot - x) ** 2 + (self.y_shoot - y) ** 2:
+            pygame.draw.circle(self.screen, "RED", (x, y), 30)
+        else:
+            pygame.draw.circle(self.screen, "RED",
+                               (self.x_shoot + cos(player.angle) * self.controller_size,
+                                self.y_shoot + sin(player.angle) * self.controller_size), 30)
 
 
 class MessageCatcherSender:
@@ -163,7 +199,6 @@ def send_move(sock):
     sock.sendall((CMD_GAME_move + str(type_of_move) + Delimiter).encode())
 
 
-ev: pygame.event
 size = width, height = 1500, 700
 tile_images = {
     'wall': load_image('maps/tiles/wall.png'),
@@ -185,13 +220,10 @@ FPS = 60
 
 
 def main(sock, extra_message, login):
-
     pygame.init()
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode(size)
     running = True
-
-    x_shoot, y_shoot = width - 150, height - 150
 
     # get data
     msc = MessageCatcherSender(sock, extra_message)
@@ -221,19 +253,14 @@ def main(sock, extra_message, login):
             enemy.rect.y -= y_shift
             player_group.add(enemy)
             brawlers_from_nick[nick] = enemy
-
+    hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
     while running:
-        ev = pygame.event.get()
-        for event in ev:
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return terminate()
 
         screen.fill((0, 0, 0))
-        mouse_buttons = pygame.mouse.get_pressed()  # убрать это, сделать нормално
-        x, y = pygame.mouse.get_pos()  # убрать это, сделать нормално
 
-        # get shift x, y
-        _x, _y = player.update(x_shoot, y_shoot, x, y, mouse_buttons)  # убрать это, сделать нормално
         # send shift
         send_move(sock)
 
@@ -253,7 +280,7 @@ def main(sock, extra_message, login):
                         brawlers_from_nick[nick].move(changes[nick][to_change])
                         #print(brawlers_from_nick[nick].rect.center)
 
-        #shift remaking
+        # shift remaking
         # if remake_shift:
         #     new_x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
         #     new_y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
@@ -266,25 +293,9 @@ def main(sock, extra_message, login):
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
         player_group.draw(screen)
-        # draw controller
-        if player.is_shoot:
-            send_attack(sock, round(degrees(player.angle)))
-            pygame.draw.line(screen, pygame.Color("RED"), (player.rect.centerx, player.rect.centery),
-                             (player.rect.centerx + cos(player.angle) * cell_size * 2,
-                              player.rect.centery + sin(player.angle) * cell_size * 2),
-                             width=10)
-        else:
-            pygame.draw.line(screen, pygame.Color("WHITE"), (player.rect.centerx, player.rect.centery),
-                             (player.rect.centerx + cos(player.angle) * cell_size * 2,
-                              player.rect.centery + sin(player.angle) * cell_size * 2), width=10)
-        pygame.draw.circle(screen, pygame.Color("RED"), (x_shoot, y_shoot), 50, width=1)
-        pygame.draw.circle(screen, pygame.Color("WHITE"), (player.rect.centerx, player.rect.centery), cell_size * 3 // 5, width=2)
-        if 2500 >= (x_shoot - x) ** 2 + (y_shoot - y) ** 2:
-            pygame.draw.circle(screen, pygame.Color("RED"), (x, y), 30)
-        else:
-            pygame.draw.circle(screen, pygame.Color("RED"),
-                               (x_shoot + cos(player.angle) * 50, y_shoot + sin(player.angle) * 50), 30)
 
+        # draw controller and send attack if pressed
+        hud.draw(*pygame.mouse.get_pos(), player, sock)
         pygame.display.flip()
         clock.tick(FPS)
 
