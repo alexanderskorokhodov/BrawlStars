@@ -5,7 +5,7 @@ from math import sin, cos, radians
 import sqlite3
 
 
-cell_size = 100
+cell_size = 50
 
 
 class Block(Sprite):
@@ -123,6 +123,7 @@ class Brawler(Sprite):
             x = -1 * round(self.speed / 2 ** (1 / 2))
             y = -1 * round(self.speed / 2 ** (1 / 2))
         self.rect.move(x, y)
+        return x, y
 
 
 class Shelly(Brawler):

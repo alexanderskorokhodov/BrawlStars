@@ -117,7 +117,7 @@ def menu(sock, id, login):
         player_info = get_player_info(login)
         sock.setblocking(True)
         sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
-        mes = sock.recv(10).decode()
+        mes = sock.recv(16).decode()
         if len(mes) == 0:
             close_connection(login)
         elif mes[-1] == Delimiter:
@@ -221,14 +221,16 @@ def showdown_game(room: list):
             brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], i[0], brawlers_group)
         players_alive.append(i[0])
         players_commands[i[0]] = ''
+    con.close()
 
     # send brawlers info to players
-    info = {}  # {login: [brawler_name, (x, y)]}
+    info = {}  # {login: [brawler_name, (x, y), power]}
+    info['bot_0'] = ['bull', (250, 1150), 1]
     for brawler in brawlers_group:
         info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power]
-    info = dumps(info)
+    message = (CMD_GAME_players_brawlers_info + dumps(info) + Delimiter).encode()
     for player_login in players_alive:
-        players_sockets[player_login].sendall((CMD_GAME_players_brawlers_info + info + Delimiter).encode())
+        players_sockets[player_login].sendall(message)
 
 
     # game part
@@ -238,9 +240,11 @@ def showdown_game(room: list):
     while running:
 
         # end of game condition
-        #if len(players_alive) <= 1:
-        #    running = False
+        if len(brawlers_group) <= 1:
+            print('game_ends')
+            running = False
 
+        changes = {}
         for i in range(len(players_alive) - 1, -1, -1):
             try:
                 players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(8).decode()
@@ -263,8 +267,23 @@ def showdown_game(room: list):
                             move_type = int(command[1])
                         except ValueError:
                             print(command)
-                        brawlers[players_alive[i]].move(move_type)
+                        cords = brawlers[players_alive[i]].move(move_type)
+                        if players_alive[i] not in changes:
+                            changes[players_alive[i]] = {}
+                        changes[players_alive[i]]['move'] = cords
 
+
+        # sending changes to players
+        message = (CMD_GAME_changes + dumps(changes) + Delimiter).encode()
+        print(message)
+        for i in range(len(players_alive) - 1, -1, -1):
+            try:
+                players_sockets[players_alive[i]].sendall(message)
+            except ConnectionError:
+                close_connection(players_alive[i])
+                players_alive.pop(i)
+
+        # tickrate
         clock.tick(tickrate)
         # print(clock.tick(tickrate))
 
