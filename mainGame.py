@@ -22,17 +22,21 @@ class MessageCatcherSender:
         self.socket.sendall(message.encode())
 
     def get_message(self):
+        #print(self.commands)
+        #print(self.extra_text)
         if len(self.commands) == 0:
             while Delimiter not in self.extra_text:
                 self.extra_text += self.socket.recv(64).decode()
-            print(self.extra_text)
+            # print(self.extra_text)
             command = self.extra_text.split(Delimiter)[0]
             self.extra_text = self.extra_text.split(Delimiter)[1:]
             for i in range(len(self.extra_text)):
                 if i != len(self.extra_text) - 1:
                     self.commands.append(self.extra_text[i])
+            print(self.commands)
             if len(self.extra_text):
                 self.extra_text = self.extra_text[-1]
+            # print(command)
             return command
         else:
             command = self.commands[0]
@@ -103,7 +107,7 @@ def load_image(name, color_key=None):
 
 
 def load_map(map_name):
-    filename = "data/maps/" + map_name + '.txt'
+    filename = "data/maps/" + map_name
     with open(filename, 'r') as mapFile:
         _map = [i.strip() for i in mapFile]
     return _map
@@ -117,8 +121,18 @@ def send_attack(sock, angle):
     sock.sendall((CMD_GAME_attack + str(angle) + Delimiter).encode())
 
 
-def send_move(sock, x, y):
-    if x and y:
+def send_move(sock):
+    x = 0
+    y = 0
+    if pygame.key.get_pressed()[pygame.K_d]:
+        x += 1
+    if pygame.key.get_pressed()[pygame.K_a]:
+        x -= 1
+    if pygame.key.get_pressed()[pygame.K_w]:
+        y -= 1
+    if pygame.key.get_pressed()[pygame.K_s]:
+        y += 1
+    if x == 0 and y == 0:
         return
     if x == 0:
         if y == 1:
@@ -172,10 +186,25 @@ def main(sock, extra_message, login):
     x_shoot, y_shoot = width - 150, height - 150
     screen = pygame.display.set_mode(size)
     field = Map(msc.get_map_name())
-    brawler_name = msc.get_brawlers()
-    cords = msc.get_brawlers()[login][2]
-    player = BRAWLERS[brawler_name](*cords)
+    all_players_data = msc.get_brawlers()
+    print(all_players_data)
+    print(login)
+    cords = all_players_data[login][1]
+    player = BRAWLERS[all_players_data[login][0]](*cords)
     running = True
+
+    # get data
+    # shift objects
+    player.rect.x, player.rect.y = all_players_data[login][1]
+    x_shift, y_shift = - width // 2 + player.rect.x, -height // 2 + player.rect.y
+    player_group = pygame.sprite.Group()
+    player_group.add(player)
+    for nick in all_players_data:
+        enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1])
+        enemy.rect.x += x_shift
+        enemy.rect.y += y_shift
+        player_group.add(enemy)
+
     while running:
         ev = pygame.event.get()
         for event in ev:
@@ -189,20 +218,7 @@ def main(sock, extra_message, login):
         # get shift x, y
         _x, _y = player.update(x_shoot, y_shoot, x, y, mouse_buttons)
         # send shift
-        send_move(sock, _x, _y)
-        # get data
-        all_players_data = msc.get_brawlers()
-        # shift objects
-        player.rect.x, player.rect.y = all_players_data[login][1]
-        x_shift, y_shift = - width // 2 + player.rect.x, -height // 2 + player.rect.y
-        player_group = pygame.sprite.Group()
-        player_group.add(player)
-        for nick in all_players_data:
-            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1])
-            enemy.rect.x += x_shift
-            enemy.rect.y += y_shift
-            player_group.add(enemy)
-
+        send_move(sock)
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
         player_group.draw(screen)

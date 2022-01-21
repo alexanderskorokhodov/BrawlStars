@@ -225,7 +225,7 @@ def showdown_game(room: list):
     # send brawlers info to players
     info = {}  # {login: [brawler_name, (x, y)]}
     for brawler in brawlers_group:
-        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top)]
+        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power]
     info = dumps(info)
     for player_login in players_alive:
         players_sockets[player_login].sendall((CMD_GAME_players_brawlers_info + info + Delimiter).encode())
@@ -254,7 +254,10 @@ def showdown_game(room: list):
                 players_commands[players_alive[i]] = Delimiter.join(extra)
                 if command.startswith(CMD_GAME_move):
                     if not spritecollideany(brawlers[players_alive[i]], walls_group):
-                        move_type = int(command[1])
+                        try:
+                            move_type = int(command[1])
+                        except ValueError:
+                            print(command)
                         brawlers[players_alive[i]].move(move_type)
 
         clock.tick(tickrate)

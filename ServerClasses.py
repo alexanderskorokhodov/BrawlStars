@@ -83,7 +83,7 @@ class PowerCrystal(Sprite):
 
 class Brawler(Sprite):
     # parent class of all brawlers
-    attributes = ['health', 'speed', 'attack_range', 'attack_reload_time', 'attack_amount_of_bullets', 'attack_damage']
+    attributes = ['id', 'health', 'speed', 'attack_range', 'attack_reload_time', 'attack_amount_of_bullets', 'attack_damage']
 
     def __init__(self, x, y, login, *group):
         super().__init__(*group)
@@ -93,8 +93,9 @@ class Brawler(Sprite):
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
         for attribute in self.attributes:
-            print(f'self.{attribute} = cur.execute(f"SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
+            # print(f'self.{attribute} = cur.execute(f"SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
             exec(f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
+        self.power = cur.execute(f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[0]
         con.close()
 
     def move(self, type_of_move):

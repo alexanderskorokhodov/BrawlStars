@@ -34,7 +34,7 @@ class Brawler(pygame.sprite.Sprite):
         self.max_health = health + (level - 1) * (health // 20)
         self.current_health = self.max_health
 
-    def update(self, x_shoot: int, y_shoot: int, x: int, y: int, mouse_buttons: list, velocity: int) -> tuple:
+    def update(self, x_shoot: int, y_shoot: int, x: int, y: int, mouse_buttons: list) -> tuple:
         self.update_angle(x_shoot, y_shoot, x, y)
         _x = 0
         _y = 0
