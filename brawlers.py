@@ -37,7 +37,6 @@ class Brawler(pygame.sprite.Sprite):
         self.current_health = self.max_health
 
     def move(self, cords):
-        print(self.rect.center, cords)
         self.rect.x += cords[0]
         self.rect.y += cords[1]
         print(self.rect.center)

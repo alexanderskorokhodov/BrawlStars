@@ -275,20 +275,19 @@ def main(sock, extra_message, login):
             for nick in changes.keys():
                 for to_change in changes[nick].keys():
                     if to_change == 'move':
-                        #print(brawlers_from_nick[nick].rect.center, changes[nick][to_change], end=', ')
-                        print(1)
                         brawlers_from_nick[nick].move(changes[nick][to_change])
-                        #print(brawlers_from_nick[nick].rect.center)
 
         # shift remaking
-        # if remake_shift:
-        #     new_x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
-        #     new_y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
-        #     if new_x_shift != x_shift or new_y_shift != y_shift:
-        #         for nick in brawlers_from_nick.keys():
-        #             brawlers_from_nick[nick].rect.move(x_shift - new_x_shift, y_shift - new_y_shift)
-        #         x_shift = new_x_shift
-        #         y_shift = new_y_shift
+        if remake_shift:
+            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
+            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
+            if new_x_shift != x_shift or new_y_shift != y_shift:
+                print(new_x_shift, x_shift)
+                for nick in brawlers_from_nick.keys():
+                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
+                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
+                x_shift = new_x_shift
+                y_shift = new_y_shift
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)

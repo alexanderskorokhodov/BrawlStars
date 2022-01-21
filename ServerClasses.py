@@ -103,25 +103,25 @@ class Brawler(Sprite):
         # то есть 0 - вверх, 1 - вверх и вправо, 2 - вправо и тд
         x, y = 0, 0
         if type_of_move == 0:
-            y = -1 * self.speed // tickrate
+            y = -1 * self.speed / tickrate
         elif type_of_move == 1:
-            x = self.speed // tickrate / 2 ** (1 / 2)
-            y = -1 * self.speed // tickrate / 2 ** (1 / 2)
+            x = self.speed / tickrate / 2 ** (1 / 2)
+            y = -1 * self.speed / tickrate / 2 ** (1 / 2)
         elif type_of_move == 2:
-            x = self.speed // tickrate
+            x = self.speed / tickrate
         elif type_of_move == 3:
-            x = self.speed // tickrate / 2 ** (1 / 2)
-            y = self.speed // tickrate / 2 ** (1 / 2)
+            x = self.speed / tickrate / 2 ** (1 / 2)
+            y = self.speed / tickrate / 2 ** (1 / 2)
         elif type_of_move == 4:
-            y = self.speed // tickrate
+            y = self.speed / tickrate
         elif type_of_move == 5:
-            x = -1 * self.speed // tickrate / 2 ** (1 / 2)
-            y = self.speed // tickrate / 2 ** (1 / 2)
+            x = -1 * self.speed / tickrate / 2 ** (1 / 2)
+            y = self.speed / tickrate / 2 ** (1 / 2)
         elif type_of_move == 6:
-            x = -1 * self.speed // tickrate
+            x = -1 * self.speed / tickrate
         elif type_of_move == 7:
-            x = -1 * self.speed // tickrate / 2 ** (1 / 2)
-            y = -1 * self.speed // tickrate / 2 ** (1 / 2)
+            x = -1 * self.speed / tickrate / 2 ** (1 / 2)
+            y = -1 * self.speed / tickrate / 2 ** (1 / 2)
         return round(x), round(y)
 
     def move(self, x, y):

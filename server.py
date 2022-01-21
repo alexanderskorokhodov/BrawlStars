@@ -205,11 +205,11 @@ def showdown_game(room: list):
     for x in range(len(lines)):
         for y in range(len(lines[x])):
             if lines[x][y] == 'X':
-                Bush(x * cell_size, y * cell_size, breakable_blocks)
+                Bush(y * cell_size, x * cell_size, breakable_blocks)
             elif lines[x][y] == '#':
-                Wall(x * cell_size, y * cell_size, walls_group, breakable_blocks)
+                Wall(y * cell_size, x * cell_size, walls_group, breakable_blocks)
             elif lines[x][y] == 'P':
-                players_start_cords.append((x * cell_size, y * cell_size))
+                players_start_cords.append((y * cell_size, x * cell_size))
 
 
     # import brawlers
