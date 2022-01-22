@@ -404,7 +404,7 @@ if __name__ == '__main__':
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
     players_sockets = {}  # players[player_login] = player socket
-    amount_of_players_for_event = {0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
+    amount_of_players_for_event = {0: 2}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:

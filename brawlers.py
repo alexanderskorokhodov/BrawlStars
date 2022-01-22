@@ -62,7 +62,7 @@ class Colt(Brawler):
 
     def attack(self, angle, bullet_group, tickrate=30):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, 500,
-               250, 200, tickrate, bullet_group)
+               250, 400, tickrate, bullet_group)
 
 
 class Bull(Brawler):
