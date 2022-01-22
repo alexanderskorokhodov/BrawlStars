@@ -1,8 +1,72 @@
 from json import loads
-from math import cos, sin, degrees
+from math import cos, sin, degrees, radians
+
+import pygame
 
 from brawlers import *
 from commands import *
+
+FIND_FONT = pygame.font.Font('./data/mainFont.ttf', 50)
+COLOR_DEFAULT = pygame.Color(102, 102, 190)
+MAIN_FONT = pygame.font.Font('./data/mainFont.ttf', 36)
+
+
+class Button:
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pygame.Color("Black"), bold=False,
+                 sound='data/tones/menu_click_08.mp3'):
+        self.color = color
+        self.og_col = color
+        self.x = x
+        self.y = y
+        self.width = w
+        self.height = h
+        self.text = text
+        self.radius = r
+        self.textColor = text_color
+        self.bold = bold
+        self.sound = pygame.mixer.Sound(sound)
+
+    def draw(self, win, outline=None):
+        # Call this method to draw the button on the screen
+        if outline:
+            pygame.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
+                             border_radius=self.radius)
+        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
+
+        if self.text != '':
+            font = MAIN_FONT
+            text = font.render(self.text, self.bold, self.textColor)
+            win.blit(text, (
+                self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+
+    def is_over(self, pos):
+        # Pos is the mouse position or a tuple of (x,y) coordinates
+        if self.x < pos[0] < self.x + self.width:
+            if self.y < pos[1] < self.y + self.height:
+                self.color = (255, 245, 238)
+            else:
+                self.color = self.og_col
+        else:
+            self.color = self.og_col
+        for event in pygame.event.get():
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.x < pos[0] < self.x + self.width:
+                    if self.y < pos[1] < self.y + self.height:
+                        self.sound.play()
+                        return True
+
+
+def draw_outline(x, y, string, win, font):
+    def draw_text(x_, y_, s, col, window, bold=True):
+        text = font.render(s, bold, col)
+        window.blit(text, (x_, y_))
+
+    r = 4
+    draw_text(x - 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y + r, string, 'black', win)
+    draw_text(x - 1, y + r, string, 'black', win)
+    draw_text(x, y, string, 'white', win)
 
 
 class CrossHair:
@@ -268,10 +332,9 @@ def main(sock, extra_message, login):
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return terminate()
+                return False, sock, None, screen
 
         screen.fill((0, 0, 0))
-
         # send shift
         send_move(sock)
 
@@ -316,6 +379,110 @@ def main(sock, extra_message, login):
     msc.setblocking(True)
     place = msc.get_end_game()
 
+    return True, sock, all_players_data[login][0], screen
+
+
+def search_window(chosen_brawler, sock, screen):
+    sock.sendall((CMD_FIND_MATCH + '0' + str(chosen_brawler // 10) + str(
+        chosen_brawler % 10) + Delimiter).encode())
+
+    running = True
+    bg = pygame.sprite.Group()
+    fg = pygame.sprite.Group()
+    img = pygame.sprite.Sprite()
+    img.image = load_image("load_in_game.png")
+    img.rect = img.image.get_rect()
+    img.rect.x, img.rect.y = 650, 250
+    background = pygame.sprite.Sprite()
+    background.image = load_image("menu.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    bg.add(background)
+    fg.add(img)
+    radius = (180, 130)
+    xd = width // 2
+    yd = height // 2
+    angle = 0
+    _fps = 60
+    clock = pygame.time.Clock()
+    players = ''
+    message = ''
+    sock.setblocking(False)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        if players and players.split('/')[0] == players.split('/')[1]:
+            if message:
+                return True, message
+            return True, ''
+        try:
+            message += sock.recv(16).decode()
+        except BlockingIOError:
+            pass
+        if Delimiter in message:
+            players = message.split(Delimiter)[0]
+            message = Delimiter.join(message.split(Delimiter)[1:])
+            players = players[len(CMD_PLAYERS_IN_ROOM):]
+
+        screen.fill((30, 30, 30))
+        bg.draw(screen)
+        angle -= 2
+        points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
+                   yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
+        pygame.draw.polygon(screen, color='black', points=points)
+        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2], yd - sin(radians(angle + i * 30)) * radius[i % 2])
+                  for i in range(12)]
+        pygame.draw.polygon(screen, color=(251, 196, 8), points=points)
+        fg.draw(screen)
+        draw_outline(470, 20, "SEARCHING FOR PLAYERS", screen, FIND_FONT)
+        draw_outline(520, 90, f"PLAYERS FOUND {players}", screen, FIND_FONT)
+        pygame.display.flip()
+        clock.tick(_fps)
+    return False, ''
+
+
+def end(sock, brawler_name, screen):
+    running = True
+    clock = pygame.time.Clock()
+    bg_sprites = pygame.sprite.Group()
+    background = pygame.sprite.Sprite()
+    background.image = load_image("menu.jpg")
+    background.rect = background.image.get_rect(center=(width // 2, height // 2))
+    back_button = Button(20, 630, 300, 64, text=f'menu', r=20)
+    bg_sprites.add(background)
+    fps = 30
+    select_button = Button(1000, 630, 400, 50, text='play again', r=20, sound='data/tones/select_brawler_01.mp3')
+    brawler = pygame.sprite.Sprite()
+    brawler.image = pygame.transform.scale(load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (400, 450))
+    brawler.rect = brawler.image.get_rect()
+    brawler.rect.x, brawler.rect.y = 200, 200
+    fg = pygame.sprite.Group()
+    extra_message = ''
+    fg.add(brawler)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                quit()
+        screen.fill((30, 30, 30))
+        bg_sprites.draw(screen)
+        back_button.draw(screen, outline=pygame.Color("BLACK"))
+        select_button.draw(screen, outline=pygame.Color("BLACK"))
+        fg.draw(screen)
+        if back_button.is_over(pygame.mouse.get_pos()):
+            res = False
+            running = False
+        if select_button.is_over(pygame.mouse.get_pos()):
+            res = True
+            running = False
+        pygame.display.flip()
+        clock.tick(fps)
+    if res:
+        res, extra_message = search_window(brawler_name, sock, screen)
+    return res, sock, extra_message
+
 
 if __name__ == '__main__':
-    main()
+    size = (1500, 700)
+    screen = pygame.display.set_mode(size)
+    end('', 'Shelly', screen=screen)

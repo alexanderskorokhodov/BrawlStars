@@ -8,7 +8,19 @@ try:
         run, sock, login, password = startWindow.main()
         run, sock, extra_message = menuWindow.main(sock, login, password)
         if run:
-            import mainGame
-            mainGame.main(sock, extra_message, login)
+            in_game = True
+            while in_game:
+                try:
+                    import mainGame
+                    run, sock, brawler, screen = mainGame.main(sock, extra_message, login)
+                    if not run:
+                        break
+                    res, sock, extra_message = mainGame.end(sock, brawler, screen)
+                    if not res:
+                        break
+                except:
+                    startWindow.server_error_window()
+                    in_game = False
+
 except:
     pass
