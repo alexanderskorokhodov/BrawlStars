@@ -1,14 +1,15 @@
 from json import loads
 from math import cos, sin, degrees, radians
 
-import pygame
-
 from brawlers import *
 from commands import *
 
 FIND_FONT = pygame.font.Font('./data/mainFont.ttf', 50)
 COLOR_DEFAULT = pygame.Color(102, 102, 190)
 MAIN_FONT = pygame.font.Font('./data/mainFont.ttf', 36)
+ev = None
+
+bs = {'Shelly': 1, 'Colt': 2, 'Bull': 2}
 
 
 class Button:
@@ -48,7 +49,7 @@ class Button:
                 self.color = self.og_col
         else:
             self.color = self.og_col
-        for event in pygame.event.get():
+        for event in ev:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.x < pos[0] < self.x + self.width:
                     if self.y < pos[1] < self.y + self.height:
@@ -382,9 +383,9 @@ def main(sock, extra_message, login):
 
 
 def search_window(chosen_brawler, sock, screen):
-    sock.sendall((CMD_FIND_MATCH + '0' + str(chosen_brawler // 10) + str(
-        chosen_brawler % 10) + Delimiter).encode())
-
+    chosen_brawler_id = bs[chosen_brawler.title()]
+    sock.sendall((CMD_FIND_MATCH + '0' + str(chosen_brawler_id // 10) + str(
+        chosen_brawler_id % 10) + Delimiter).encode())
     running = True
     bg = pygame.sprite.Group()
     fg = pygame.sprite.Group()
@@ -443,6 +444,7 @@ def search_window(chosen_brawler, sock, screen):
 
 def end(sock, brawler_name, place, screen):
     running = True
+    global ev
     clock = pygame.time.Clock()
     bg_sprites = pygame.sprite.Group()
     background = pygame.sprite.Sprite()
@@ -451,16 +453,17 @@ def end(sock, brawler_name, place, screen):
     back_button = Button(20, 630, 300, 64, text=f'menu', r=20)
     bg_sprites.add(background)
     fps = 30
-    select_button = Button(1000, 630, 400, 50, text='play again', r=20, sound='data/tones/select_brawler_01.mp3')
+    select_button = Button(1080, 630, 400, 64, text='play again', r=20, sound='data/tones/select_brawler_01.mp3')
     brawler = pygame.sprite.Sprite()
-    brawler.image = pygame.transform.scale(load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (400, 450))
+    brawler.image = pygame.transform.scale(load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
     brawler.rect = brawler.image.get_rect()
-    brawler.rect.x, brawler.rect.y = 200, 200
+    brawler.rect.x, brawler.rect.y = 500, 100
     fg = pygame.sprite.Group()
     extra_message = ''
     fg.add(brawler)
     while running:
-        for event in pygame.event.get():
+        ev = pygame.event.get()
+        for event in ev:
             if event.type == pygame.QUIT:
                 quit()
         screen.fill((30, 30, 30))
