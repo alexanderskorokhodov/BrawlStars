@@ -414,7 +414,12 @@ def showdown_game(room: list):
 if __name__ == '__main__':
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = ('127.0.1.0', 10000)
+    with open('ip.txt') as f:
+        ip = f.read()
+    if ip:
+        server_address = (ip, 10000)
+    else:
+        server_address = (socket.gethostbyname(socket.gethostname()), 10000)
     print('Старт сервера на {} порт {}'.format(*server_address))
     sock.bind(server_address)
     sock.listen(10)
