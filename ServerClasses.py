@@ -135,6 +135,18 @@ class Shelly(Brawler):
         super().__init__(x, y, login, *group)
 
 
+class Colt(Brawler):
+
+    def __init__(self, x, y, login, *group):
+        super().__init__(x, y, login, *group)
+
+
+class Bull(Brawler):
+
+    def __init__(self, x, y, login, *group):
+        super().__init__(x, y, login, *group)
+
+
 if __name__ == '__main__':
     s = Shelly(1, 2)
     print(s.health, s.speed, s.attack_damage)

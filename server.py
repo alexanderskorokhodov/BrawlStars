@@ -176,7 +176,7 @@ def match_finder(event_id):
 def showdown_game(room: list):
 
     # init
-    from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly
+    from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly, Colt, Bull
     print(room)
     print('game_starts')
 
@@ -190,6 +190,9 @@ def showdown_game(room: list):
             close_connection(player[0])
             room.remove(player)
 
+    brawler_class = {'shelly': Shelly,  # {'brawler_name': BrawlerClass}
+                     'colt': Colt,
+                     'bull': Bull}
     brawlers = {}  # {login : BrawlerClass}
     players_start_cords = []  # [(x, y)]
     players_alive = []
@@ -217,20 +220,24 @@ def showdown_game(room: list):
     cur = con.cursor()
     for index, i in enumerate(room):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
-        if brawler_name == 'shelly':
-            brawlers[i[0]] = Shelly(players_start_cords[index][0], players_start_cords[index][1], i[0], brawlers_group)
-        players_alive.append(i[0])
-        players_commands[i[0]] = ''
+        if brawler_name in brawler_class:
+            brawlers[i[0]] = brawler_class[brawler_name](players_start_cords[index][0], players_start_cords[index][1],
+                                    i[0], brawlers_group)
+            players_alive.append(i[0])
+            players_commands[i[0]] = ''
+        else:
+            raise ValueError(f'не добавлен бравлер с именем "{brawler_name}"')
     con.close()
 
     # send brawlers info to players
     info = {}  # {login: [brawler_name, (x, y), power]}
-    info['bot_0'] = ['bull', (250, 1150), 1]
+    info['bot_0'] = ['colt', (250, 1150), 1]
     for brawler in brawlers_group:
         info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power]
     message = (CMD_GAME_players_brawlers_info + dumps(info) + Delimiter).encode()
     for player_login in players_alive:
         players_sockets[player_login].sendall(message)
+    print(info)
 
 
     # game part
@@ -251,7 +258,7 @@ def showdown_game(room: list):
                 if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
                     try:
                         command, extra = players_commands[players_alive[i]].split(Delimiter)
-                        # print(command)
+                        print(command)
                     except ValueError as e:
                         print(players_commands[players_alive[i]])
                         raise e
