@@ -225,7 +225,7 @@ def showdown_game(room: list):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
         if brawler_name in brawler_class:
             brawlers[i[0]] = brawler_class[brawler_name](players_start_cords[index][0], players_start_cords[index][1],
-                                    i[0], brawlers_group)
+                                    i[0], brawlers_group, bullet_group=bullets_group)
             players_alive.append(i[0])
             players_commands[i[0]] = ''
         else:
@@ -250,7 +250,7 @@ def showdown_game(room: list):
     while running:
 
         # end of game condition
-        if len(brawlers_group) <= 1:
+        if len(brawlers_group) <= 0:
             print('game_ends')
             running = False
             for player in players_alive:
@@ -302,21 +302,11 @@ def showdown_game(room: list):
                             first_command = CMD_GAME_attack
                             angle = int(command[1:])
                             print(angle, 1)
-                            # x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
-                            #                                                              tickrate)
-                            # brawlers[players_alive[i]].move(x, 0)
-                            # if spritecollideany(brawlers[players_alive[i]], walls_group):
-                            #     brawlers[players_alive[i]].move(-x, 0)
-                            #     x = 0
-                            # brawlers[players_alive[i]].move(0, y)
-                            # if spritecollideany(brawlers[players_alive[i]], walls_group):
-                            #     brawlers[players_alive[i]].move(0, -y)
-                            #     y = 0
-                            # if x or y:
-                            #     print(brawlers[players_alive[i]].rect.center)
-                            #     if players_alive[i] not in changes:
-                            #         changes[players_alive[i]] = {}
-                            #     changes[players_alive[i]]['move'] = (x, y)
+                            if brawlers[players_alive[i]].class_name == 'colt':
+                                brawlers[players_alive[i]].attack(angle, tickrate)
+                                if players_alive[i] not in changes:
+                                    changes[players_alive[i]] = {}
+                                changes[players_alive[i]]['attack'] = angle
                         except ValueError:
                             print(command)
                             raise ValueError(command)
@@ -354,21 +344,11 @@ def showdown_game(room: list):
                             try:
                                 angle = int(command[1:])
                                 print(angle, 2)
-                                # x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
-                                #                                                              tickrate)
-                                # brawlers[players_alive[i]].move(x, 0)
-                                # if spritecollideany(brawlers[players_alive[i]], walls_group):
-                                #     brawlers[players_alive[i]].move(-x, 0)
-                                #     x = 0
-                                # brawlers[players_alive[i]].move(0, y)
-                                # if spritecollideany(brawlers[players_alive[i]], walls_group):
-                                #     brawlers[players_alive[i]].move(0, -y)
-                                #     y = 0
-                                # if x or y:
-                                #     print(brawlers[players_alive[i]].rect.center)
-                                #     if players_alive[i] not in changes:
-                                #         changes[players_alive[i]] = {}
-                                #     changes[players_alive[i]]['move'] = (x, y)
+                                if brawlers[players_alive[i]].class_name == 'colt':
+                                    brawlers[players_alive[i]].attack(angle, tickrate)
+                                    if players_alive[i] not in changes:
+                                        changes[players_alive[i]] = {}
+                                    changes[players_alive[i]]['attack'] = angle
                             except ValueError:
                                 print(command)
                                 raise ValueError(command)
@@ -397,7 +377,6 @@ def showdown_game(room: list):
         # print(clock.tick(tickrate))
 
 
-
     # end of game
     for player in players_alive:
         players_sockets[player].setblocking(True)
@@ -407,8 +386,6 @@ def showdown_game(room: list):
             print(1)
             close_connection(player)
             room.remove(player)
-
-
 
 
 if __name__ == '__main__':

@@ -88,7 +88,7 @@ class CrossHair:
 
         # draw attack
         if pygame.mouse.get_pressed()[0]:
-            send_attack(sock, round(degrees(player.angle)))
+            # send_attack(sock, round(degrees(player.angle)))
             pygame.draw.line(self.screen, "RED", (player.rect.centerx, player.rect.centery), (
                 player.rect.centerx + cos(player.angle) * self.attack_length,
                 player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
@@ -106,6 +106,10 @@ class CrossHair:
             pygame.draw.circle(self.screen, "RED",
                                (self.x_shoot + cos(player.angle) * self.controller_size,
                                 self.y_shoot + sin(player.angle) * self.controller_size), 30)
+
+    def shoot(self, x, y, player, sock):
+        player.update_angle(self.x_shoot, self.y_shoot, x, y)  # update angle
+        send_attack(sock, round(degrees(player.angle)))
 
 
 class MessageCatcherSender:
@@ -318,8 +322,10 @@ def main(sock, extra_message, login):
     player.rect.x -= x_shift
     player.rect.y -= y_shift
 
+    bullet_group = pygame.sprite.Group()
     player_group = pygame.sprite.Group()
     player_group.add(player)
+
     brawlers_from_nick = {}
     brawlers_from_nick[login] = player
     for nick in all_players_data:
@@ -334,6 +340,8 @@ def main(sock, extra_message, login):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False, sock, None, screen
+            elif event.type == pygame.MOUSEBUTTONUP:
+                hud.shoot(*pygame.mouse.get_pos(), player, sock)
 
         screen.fill((0, 0, 0))
         # send shift
@@ -351,6 +359,9 @@ def main(sock, extra_message, login):
                 for to_change in changes[nick].keys():
                     if to_change == 'move':
                         brawlers_from_nick[nick].move(changes[nick][to_change])
+                    elif to_change == 'attack':
+                        print(1)
+                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
                     elif to_change == 'died':
                         if nick == login:
                             running = False
@@ -370,6 +381,8 @@ def main(sock, extra_message, login):
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
+        bullet_group.update()
+        bullet_group.draw(screen)
         player_group.draw(screen)
 
         # draw controller and send attack if pressed

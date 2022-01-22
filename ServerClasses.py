@@ -4,7 +4,6 @@ from random import randint
 from math import sin, cos, radians
 import sqlite3
 
-
 cell_size = 50
 
 
@@ -83,10 +82,12 @@ class PowerCrystal(Sprite):
 
 class Brawler(Sprite):
     # parent class of all brawlers
-    attributes = ['id', 'health', 'speed', 'attack_range', 'attack_reload_time', 'attack_amount_of_bullets', 'attack_damage']
+    attributes = ['id', 'health', 'speed', 'attack_range', 'attack_reload_time',
+                  'attack_amount_of_bullets', 'attack_damage', 'attack_speed']
 
-    def __init__(self, x, y, login, *group):
+    def __init__(self, x, y, login, bullet_group, *group):
         super().__init__(*group)
+        self.bullet_group = bullet_group
         self.player_name = login
         self.rect = Rect(x, y, cell_size, cell_size)
         self.class_name = self.__class__.__name__.lower()
@@ -94,8 +95,11 @@ class Brawler(Sprite):
         cur = con.cursor()
         for attribute in self.attributes:
             # print(f'self.{attribute} = cur.execute(f"SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
-            exec(f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
-        self.power = cur.execute(f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[0]
+            exec(
+                f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
+        self.power = cur.execute(
+            f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[
+            0]
         con.close()
 
     def from_type_of_move_to_cords(self, type_of_move, tickrate):
@@ -131,20 +135,46 @@ class Brawler(Sprite):
 
 class Shelly(Brawler):
 
-    def __init__(self, x, y, login, *group):
-        super().__init__(x, y, login, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None):
+        super().__init__(x, y, login, bullet_group, *group)
 
 
 class Colt(Brawler):
 
-    def __init__(self, x, y, login, *group):
-        super().__init__(x, y, login, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None):
+        super().__init__(x, y, login, bullet_group, *group)
+
+    def attack(self, angle, tickrate):
+        Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, self.attack_speed,
+               self.attack_range, self.attack_damage, tickrate, self.bullet_group)
 
 
 class Bull(Brawler):
 
-    def __init__(self, x, y, login, *group):
-        super().__init__(x, y, login, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None):
+        super().__init__(x, y, login, bullet_group, *group)
+
+
+class Bullet(Sprite):
+    # parent class of all bullets
+    def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, tickrate, *group):
+        super().__init__(*group)
+        self.rect = Rect(x, y, radius * 2, radius * 2)
+        self.radius = radius
+        self.angle = angle
+        self.speed = bullet_speed / tickrate
+        self.x_step = self.speed * cos(radians(self.angle))
+        self.y_step = self.speed * sin(radians(self.angle))
+        self.max_range = max_range
+        self.damage = damage
+        self.current_range = 0
+
+    def update(self, *args, **kwargs) -> None:
+        self.rect.x += self.x_step
+        self.rect.y += self.y_step
+        self.current_range += (self.x_step ** 2 + self.y_step ** 2) ** (1 / 2)
+        if self.current_range >= self.max_range:
+            self.kill()
 
 
 if __name__ == '__main__':
