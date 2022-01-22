@@ -180,7 +180,7 @@ def showdown_game(room: list):
     print(room)
     print('game_starts')
 
-    map_name = 'RockwallBrawl.txt'
+    map_name = 'testmap.txt'
 
     for player in room:
         players_sockets[player[0]].setblocking(False)
@@ -199,6 +199,7 @@ def showdown_game(room: list):
     players_commands = {}
 
     brawlers_group = Group()
+    bullets_group = Group()
     walls_group = Group()
     breakable_blocks = Group()
 
@@ -211,6 +212,8 @@ def showdown_game(room: list):
                 Bush(y * cell_size, x * cell_size, breakable_blocks)
             elif lines[x][y] == '#':
                 Wall(y * cell_size, x * cell_size, walls_group, breakable_blocks)
+            elif lines[x][y] == 'S':
+                Skeletons(y * cell_size, x * cell_size, walls_group, breakable_blocks)
             elif lines[x][y] == 'P':
                 players_start_cords.append((y * cell_size, x * cell_size))
 
@@ -231,9 +234,9 @@ def showdown_game(room: list):
 
     # send brawlers info to players
     info = {}  # {login: [brawler_name, (x, y), power]}
-    info['bot_0'] = ['colt', (250, 1150), 1]
+    # info['bot_0'] = ['colt', (250, 1150), 1]
     for brawler in brawlers_group:
-        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power]
+        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power, brawler.health]
     message = (CMD_GAME_players_brawlers_info + dumps(info) + Delimiter).encode()
     for player_login in players_alive:
         players_sockets[player_login].sendall(message)
@@ -247,9 +250,9 @@ def showdown_game(room: list):
     while running:
 
         # end of game condition
-        # if len(brawlers_group) <= 1:
-        #     print('game_ends')
-        #     running = False
+        if len(brawlers_group) <= 1:
+            print('game_ends')
+            running = False
 
         changes = {}
         for i in range(len(players_alive) - 1, -1, -1):
@@ -278,7 +281,6 @@ def showdown_game(room: list):
                                 brawlers[players_alive[i]].move(0, -y)
                                 y = 0
                             if x or y:
-                                print(brawlers[players_alive[i]].rect.center)
                                 if players_alive[i] not in changes:
                                     changes[players_alive[i]] = {}
                                 changes[players_alive[i]]['move'] = (x, y)
@@ -389,6 +391,14 @@ def showdown_game(room: list):
 
 
     # end of game
+    for player in players_alive:
+        players_sockets[player].setblocking(True)
+        try:
+            players_sockets[player].sendall((CMD_GAME_game_ends + '1' + Delimiter).encode())
+        except ConnectionError:
+            close_connection(player)
+            room.remove(player)
+
 
 
 
@@ -403,7 +413,7 @@ if __name__ == '__main__':
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
     players_sockets = {}  # players[player_login] = player socket
-    amount_of_players_for_event = {0: 2}  # amount_of_players_for_event[event_id] = amount_of_players
+    amount_of_players_for_event = {0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:
