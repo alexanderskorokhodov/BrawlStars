@@ -253,6 +253,14 @@ def showdown_game(room: list):
         if len(brawlers_group) <= 1:
             print('game_ends')
             running = False
+            for player in players_alive:
+                try:
+                    changes = {player: {'died': 0}}
+                    players_sockets[player].sendall((CMD_GAME_changes + dumps(changes) + Delimiter).encode())
+                except ConnectionError:
+                    close_connection(player)
+
+            break
 
         changes = {}
         for i in range(len(players_alive) - 1, -1, -1):
@@ -396,6 +404,7 @@ def showdown_game(room: list):
         try:
             players_sockets[player].sendall((CMD_GAME_game_ends + '1' + Delimiter).encode())
         except ConnectionError:
+            print(1)
             close_connection(player)
             room.remove(player)
 
@@ -405,7 +414,7 @@ def showdown_game(room: list):
 if __name__ == '__main__':
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = ('192.168.27.192', 10000)
+    server_address = ('127.0.1.0', 10000)
     print('Старт сервера на {} порт {}'.format(*server_address))
     sock.bind(server_address)
     sock.listen(10)

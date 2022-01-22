@@ -378,8 +378,7 @@ def main(sock, extra_message, login):
 
     msc.setblocking(True)
     place = msc.get_end_game()
-
-    return True, sock, all_players_data[login][0], screen
+    return True, sock, all_players_data[login][0], screen, place
 
 
 def search_window(chosen_brawler, sock, screen):
@@ -442,7 +441,7 @@ def search_window(chosen_brawler, sock, screen):
     return False, ''
 
 
-def end(sock, brawler_name, screen):
+def end(sock, brawler_name, place, screen):
     running = True
     clock = pygame.time.Clock()
     bg_sprites = pygame.sprite.Group()

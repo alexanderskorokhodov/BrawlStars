@@ -181,7 +181,7 @@ def start():
         clock.tick(fps)
         if length_of_loading >= width - 200:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            server_address = ('', 10000)
+            server_address = ('127.0.1.0', 10000)
             print('Подключено к {} порт {}'.format(*server_address))
             sock.connect(server_address)
             running = False
