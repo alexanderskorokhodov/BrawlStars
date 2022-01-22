@@ -243,7 +243,7 @@ def showdown_game(room: list):
     # game part
     running = True
     clock = Clock()
-    tickrate = 64
+    tickrate = 30
     while running:
 
         # end of game condition
@@ -395,7 +395,7 @@ def showdown_game(room: list):
 if __name__ == '__main__':
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_address = (socket.gethostbyname(socket.gethostname()), 10000)
+    server_address = ('192.168.27.192', 10000)
     print('Старт сервера на {} порт {}'.format(*server_address))
     sock.bind(server_address)
     sock.listen(10)
@@ -403,7 +403,7 @@ if __name__ == '__main__':
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
     players_sockets = {}  # players[player_login] = player socket
-    amount_of_players_for_event = {0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
+    amount_of_players_for_event = {0: 2}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:

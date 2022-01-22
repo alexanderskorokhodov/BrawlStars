@@ -216,7 +216,7 @@ tile_decode = {'X': 'bushes',
                'C': 'chest',
                '-': 'water'}
 BRAWLERS = {'shelly': Shelly, 'colt': Colt, 'bull': Bull}
-FPS = 60
+FPS = 30
 
 
 def main(sock, extra_message, login):
