@@ -253,18 +253,19 @@ def showdown_game(room: list):
 
         changes = {}
         for i in range(len(players_alive) - 1, -1, -1):
+            first_command = ''
             try:
                 players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(8).decode()
                 if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
-                    try:
-                        command, extra = players_commands[players_alive[i]].split(Delimiter)
-                        print(command)
-                    except ValueError as e:
-                        print(players_commands[players_alive[i]])
-                        raise e
-                    players_commands[players_alive[i]] = Delimiter.join(extra)
+                    commands = players_commands[players_alive[i]].split(Delimiter)
+                    command = commands[0]
+
+                    # first command
+
+                    # move command
                     if command.startswith(CMD_GAME_move):
                         try:
+                            first_command = CMD_GAME_move
                             move_type = int(command[1])
                             x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
                                                                                          tickrate)
@@ -284,6 +285,87 @@ def showdown_game(room: list):
                         except ValueError:
                             print(command)
                             raise ValueError(command)
+
+                    # attack command
+                    elif command.startswith(CMD_GAME_attack):
+                        try:
+                            first_command = CMD_GAME_attack
+                            angle = int(command[1:])
+                            print(angle, 1)
+                            # x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
+                            #                                                              tickrate)
+                            # brawlers[players_alive[i]].move(x, 0)
+                            # if spritecollideany(brawlers[players_alive[i]], walls_group):
+                            #     brawlers[players_alive[i]].move(-x, 0)
+                            #     x = 0
+                            # brawlers[players_alive[i]].move(0, y)
+                            # if spritecollideany(brawlers[players_alive[i]], walls_group):
+                            #     brawlers[players_alive[i]].move(0, -y)
+                            #     y = 0
+                            # if x or y:
+                            #     print(brawlers[players_alive[i]].rect.center)
+                            #     if players_alive[i] not in changes:
+                            #         changes[players_alive[i]] = {}
+                            #     changes[players_alive[i]]['move'] = (x, y)
+                        except ValueError:
+                            print(command)
+                            raise ValueError(command)
+                    commands.pop(0)
+
+                    # second command
+                    if len(commands):
+                        command = commands[0]
+                        # move command
+                        if first_command != CMD_GAME_move and command.startswith(CMD_GAME_move):
+                            try:
+                                move_type = int(command[1])
+                                x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(
+                                    move_type,
+                                    tickrate)
+                                brawlers[players_alive[i]].move(x, 0)
+                                if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                    brawlers[players_alive[i]].move(-x, 0)
+                                    x = 0
+                                brawlers[players_alive[i]].move(0, y)
+                                if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                    brawlers[players_alive[i]].move(0, -y)
+                                    y = 0
+                                if x or y:
+                                    print(brawlers[players_alive[i]].rect.center)
+                                    if players_alive[i] not in changes:
+                                        changes[players_alive[i]] = {}
+                                    changes[players_alive[i]]['move'] = (x, y)
+                            except ValueError:
+                                print(command)
+                                raise ValueError(command)
+
+                        # attack command
+                        elif first_command != CMD_GAME_attack and command.startswith(CMD_GAME_attack):
+                            try:
+                                angle = int(command[1:])
+                                print(angle, 2)
+                                # x, y = brawlers[players_alive[i]].from_type_of_move_to_cords(move_type,
+                                #                                                              tickrate)
+                                # brawlers[players_alive[i]].move(x, 0)
+                                # if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                #     brawlers[players_alive[i]].move(-x, 0)
+                                #     x = 0
+                                # brawlers[players_alive[i]].move(0, y)
+                                # if spritecollideany(brawlers[players_alive[i]], walls_group):
+                                #     brawlers[players_alive[i]].move(0, -y)
+                                #     y = 0
+                                # if x or y:
+                                #     print(brawlers[players_alive[i]].rect.center)
+                                #     if players_alive[i] not in changes:
+                                #         changes[players_alive[i]] = {}
+                                #     changes[players_alive[i]]['move'] = (x, y)
+                            except ValueError:
+                                print(command)
+                                raise ValueError(command)
+                        commands.pop(0)
+                        players_commands[players_alive[i]] = Delimiter.join(commands)
+                    else:
+                        players_commands[players_alive[i]] = Delimiter.join(commands)
             except ConnectionError:
                 close_connection(players_alive[i])
                 players_alive.pop(i)
