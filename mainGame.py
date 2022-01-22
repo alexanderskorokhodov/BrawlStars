@@ -108,6 +108,17 @@ class MessageCatcherSender:
             print(message)
             raise Exception(f'другая команда в очереди, напиши Сане ({message})')
 
+    def get_end_game(self):
+        message = self.get_message()
+        if not message:
+            return ''
+        if message.startswith(CMD_GAME_game_ends):
+            place = int(message[len(CMD_GAME_game_ends):])
+            return place
+        else:
+            print(message)
+            raise Exception(f'другая команда в очереди, напиши Сане ({message})')
+
 
 class Map(pygame.sprite.Sprite):
     def __init__(self, map_name):
@@ -276,6 +287,10 @@ def main(sock, extra_message, login):
                 for to_change in changes[nick].keys():
                     if to_change == 'move':
                         brawlers_from_nick[nick].move(changes[nick][to_change])
+                    elif to_change == 'died':
+                        if nick == login:
+                            running = False
+                            break
 
         # shift remaking
         if remake_shift:
@@ -297,6 +312,9 @@ def main(sock, extra_message, login):
         hud.draw(*pygame.mouse.get_pos(), player, sock)
         pygame.display.flip()
         clock.tick(FPS)
+
+    msc.setblocking(True)
+    place = msc.get_end_game()
 
 
 if __name__ == '__main__':
