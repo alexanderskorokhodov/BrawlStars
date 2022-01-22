@@ -57,13 +57,15 @@ class Button:
             pg.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0,
                          border_radius=self.radius)
 
-        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
+        pg.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0,
+                     border_radius=self.radius)
 
         if self.text != '':
             font = FONT
             text = font.render(self.text, True, (0, 0, 0))
             win.blit(text, (
-                self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+                self.x + (self.width / 2 - text.get_width() / 2),
+                self.y + (self.height / 2 - text.get_height() / 2)))
 
     def is_over(self, pos):
         # Pos is the mouse position or a tuple of (x,y) coordinates
@@ -160,7 +162,8 @@ def start():
     all_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
     screens = os.listdir('./data/loginScreens')
-    background.image = pg.transform.scale(load_image(f"loginScreens/{random.choice(screens)}"), (width, height))
+    background.image = pg.transform.scale(load_image(f"loginScreens/{random.choice(screens)}"),
+                                          (width, height))
     background.rect = background.image.get_rect(center=(width // 2, height // 2))
     length_of_loading = 100
     rect(screen, "Gray", (100, 600, length_of_loading, 50), width=1, border_radius=25)
@@ -281,7 +284,8 @@ def login_reg_window(sock):
                     login, password = get_data()[:-1]
                     text_error = FONT.render("", True, (255, 0, 0))
                     sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
-                    message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
+                    message = sock.recv(
+                        max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
                     if message == CMD_RIGHT_PASSWORD:
                         done = True
                         return True, login, password
@@ -339,8 +343,10 @@ def login_reg_window(sock):
                 if check:
                     login, password, nick = get_data()
                     text_error = FONT.render("", True, (255, 0, 0))
-                    sock.sendall((CMD_TO_REGISTRATION + login + Delimiter + password + Delimiter + nick).encode())
-                    message = sock.recv(max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
+                    sock.sendall((
+                                         CMD_TO_REGISTRATION + login + Delimiter + password + Delimiter + nick).encode())
+                    message = sock.recv(
+                        max(len(CMD_SUCCESSFUL_REGISTRATION), len(CMD_FAIL_REGISTRATION))).decode()
                     if message == CMD_SUCCESSFUL_REGISTRATION:
                         done = True
                         return True, login, password

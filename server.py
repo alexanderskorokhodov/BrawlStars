@@ -16,11 +16,11 @@ def close_connection(login):
 
 
 def log_in(sock, id):
-
     def check_password(login, password):
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
-        result = cur.execute(f"""SELECT password FROM passwords WHERE login = '{login}'""").fetchone()
+        result = cur.execute(
+            f"""SELECT password FROM passwords WHERE login = '{login}'""").fetchone()
         con.close()
         if result is None:
             return False
@@ -40,7 +40,9 @@ def log_in(sock, id):
             cur.execute(
                 f"""INSERT INTO passwords(login, password) VALUES('{login}', '{password}')""")
             cur.execute(f"""INSERT INTO players(login, nickname) VALUES('{login}', '{nickname}')""")
-            cur.execute(f"""INSERT INTO players_brawlers(login, brawler_id, cups, power, power_points) VALUES('{login}', 1, 0, 1, 0)""")
+            cur.execute(
+                f"""INSERT INTO players_brawlers(login, brawler_id, cups, power, power_points) 
+                VALUES('{login}', 1, 0, 1, 0)""")
             con.commit()
             con.close()
             return True
@@ -91,28 +93,36 @@ def log_in(sock, id):
 
 
 def menu(sock, id, login):
-
     def get_player_info(login):
         info = {}
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
         for item in ('nickname', 'money', 'all_cups'):
-            info[item] = cur.execute(f"""SELECT {item} FROM players WHERE login = '{login}'""").fetchone()[0]
+            info[item] = \
+                cur.execute(f"""SELECT {item} FROM players WHERE login = '{login}'""").fetchone()[0]
         info['brawlers'] = {}
-        for i in cur.execute(f"""SELECT brawler_id FROM players_brawlers WHERE login = '{login}'""").fetchall():
-            info['brawlers'][cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[0]] = cur.execute(f"""SELECT cups, power, power_points, brawler_id FROM players_brawlers WHERE brawler_id = {i[0]} AND login = '{login}'""").fetchone()
+        for i in cur.execute(
+                f"""SELECT brawler_id FROM players_brawlers WHERE login = '{login}'""").fetchall():
+            info['brawlers'][
+                cur.execute(f"""SELECT name FROM brawlers WHERE id = {i[0]}""").fetchone()[
+                    0]] = cur.execute(
+                f"""SELECT cups, power, power_points, brawler_id FROM players_brawlers WHERE 
+                brawler_id = {i[0]} AND login = '{login}'""").fetchone()
         con.close()
         return info
 
     def check_player_brawler(login, id):
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
-        if cur.execute(f"""SELECT id FROM players_brawlers WHERE brawler_id = {id} AND login = '{login}'""").fetchone() is None:
+        if cur.execute(
+                f"""SELECT id FROM players_brawlers 
+                WHERE brawler_id = {id} AND login = '{login}'""").fetchone() is None:
             con.close()
             return False
         else:
             con.close()
             return True
+
     try:
         player_info = get_player_info(login)
         sock.setblocking(True)
@@ -155,7 +165,8 @@ def match_finder(event_id):
             if len(rooms[event_id]) >= amount_of_players_for_event[event_id]:
                 room = []
                 for i in range(amount_of_players_for_event[event_id]):
-                    players_sockets[rooms[event_id][i][0]].sendall((CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
+                    players_sockets[rooms[event_id][i][0]].sendall(
+                        (CMD_PLAYERS_IN_ROOM + '10/10' + Delimiter).encode())
                     room.append(rooms[event_id][i])
                 for i in room:
                     rooms[event_id].remove(i)
@@ -174,13 +185,14 @@ def match_finder(event_id):
 
 
 def showdown_game(room: list):
-
     # init
-    from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly, Colt, Bull
+    from ServerClasses import cell_size, Wall, Bush, Skeletons, Chest, PowerCrystal, Shelly, Colt, \
+        Bull
     print(room)
     print('game_starts')
 
     map_name = 'testmap.txt'
+    # map_name = 'RockwallBrawl.txt'
 
     for player in room:
         players_sockets[player[0]].setblocking(False)
@@ -217,15 +229,16 @@ def showdown_game(room: list):
             elif lines[x][y] == 'P':
                 players_start_cords.append((y * cell_size, x * cell_size))
 
-
     # import brawlers
     con = sqlite3.connect("BrawlStars.db")
     cur = con.cursor()
     for index, i in enumerate(room):
         brawler_name = cur.execute(f'''SELECT name FROM brawlers WHERE id = {i[1]}''').fetchone()[0]
         if brawler_name in brawler_class:
-            brawlers[i[0]] = brawler_class[brawler_name](players_start_cords[index][0], players_start_cords[index][1],
-                                    i[0], brawlers_group, bullet_group=bullets_group)
+            brawlers[i[0]] = brawler_class[brawler_name](players_start_cords[index][0],
+                                                         players_start_cords[index][1],
+                                                         i[0], brawlers_group,
+                                                         bullet_group=bullets_group)
             players_alive.append(i[0])
             players_commands[i[0]] = ''
         else:
@@ -236,12 +249,12 @@ def showdown_game(room: list):
     info = {}  # {login: [brawler_name, (x, y), power]}
     # info['bot_0'] = ['colt', (250, 1150), 1]
     for brawler in brawlers_group:
-        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top), brawler.power, brawler.health]
+        info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top),
+                                     brawler.power, brawler.health]
     message = (CMD_GAME_players_brawlers_info + dumps(info) + Delimiter).encode()
     for player_login in players_alive:
         players_sockets[player_login].sendall(message)
     print(info)
-
 
     # game part
     running = True
@@ -256,7 +269,8 @@ def showdown_game(room: list):
             for player in players_alive:
                 try:
                     changes = {player: {'died': 0}}
-                    players_sockets[player].sendall((CMD_GAME_changes + dumps(changes) + Delimiter).encode())
+                    players_sockets[player].sendall(
+                        (CMD_GAME_changes + dumps(changes) + Delimiter).encode())
                 except ConnectionError:
                     close_connection(player)
 
@@ -266,7 +280,8 @@ def showdown_game(room: list):
         for i in range(len(players_alive) - 1, -1, -1):
             first_command = ''
             try:
-                players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(8).decode()
+                players_commands[players_alive[i]] += players_sockets[players_alive[i]].recv(
+                    8).decode()
                 if Delimiter in players_commands[players_alive[i]]:  # maybe optimise
                     commands = players_commands[players_alive[i]].split(Delimiter)
                     command = commands[0]
@@ -340,7 +355,8 @@ def showdown_game(room: list):
                                 raise ValueError(command)
 
                         # attack command
-                        elif first_command != CMD_GAME_attack and command.startswith(CMD_GAME_attack):
+                        elif first_command != CMD_GAME_attack and command.startswith(
+                                CMD_GAME_attack):
                             try:
                                 angle = int(command[1:])
                                 print(angle, 2)
@@ -376,7 +392,6 @@ def showdown_game(room: list):
         clock.tick(tickrate)
         # print(clock.tick(tickrate))
 
-
     # end of game
     for player in players_alive:
         players_sockets[player].setblocking(True)
@@ -404,7 +419,8 @@ if __name__ == '__main__':
     # events: showdown(event_id = 0)
     rooms = [[]]  # list of rooms where players are waiting match, ind = event_id
     players_sockets = {}  # players[player_login] = player socket
-    amount_of_players_for_event = {0: 2}  # amount_of_players_for_event[event_id] = amount_of_players
+    amount_of_players_for_event = {
+        0: 1}  # amount_of_players_for_event[event_id] = amount_of_players
     game_funcs = [showdown_game]  # game_funcs[event_id] = func for this event
 
     while True:

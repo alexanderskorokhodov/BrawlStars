@@ -26,7 +26,8 @@ def load_image(name, color_key=None):
 class Brawler(pygame.sprite.Sprite):
     def __init__(self, x_, y_, name, health, level):
         super().__init__()
-        self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"), (cell_size, cell_size))
+        self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"),
+                                            (cell_size, cell_size))
         self.rect = self.image.get_rect()
         self.name = name
         self.rect.x, self.rect.y = x_, y_

@@ -13,7 +13,8 @@ bs = {'Shelly': 1, 'Colt': 2, 'Bull': 2}
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pygame.Color("Black"), bold=False,
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0,
+                 text_color=pygame.Color("Black"), bold=False,
                  sound='data/tones/menu_click_08.mp3'):
         self.color = color
         self.og_col = color
@@ -30,15 +31,18 @@ class Button:
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
         if outline:
-            pygame.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
+            pygame.draw.rect(win, outline,
+                             (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
                              border_radius=self.radius)
-        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
+        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0,
+                         border_radius=self.radius)
 
         if self.text != '':
             font = MAIN_FONT
             text = font.render(self.text, self.bold, self.textColor)
             win.blit(text, (
-                self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+                self.x + (self.width / 2 - text.get_width() / 2),
+                self.y + (self.height / 2 - text.get_height() / 2)))
 
     def is_over(self, pos):
         # Pos is the mouse position or a tuple of (x,y) coordinates
@@ -83,19 +87,22 @@ class CrossHair:
     def draw(self, x, y, player, sock):
         player.update_angle(self.x_shoot, self.y_shoot, x, y)  # update angle
 
-        pygame.draw.circle(self.screen, pygame.Color("WHITE"), (player.rect.centerx, player.rect.centery),
-                           self.cell_size, width=2)  # player outline
+        pygame.draw.circle(self.screen, pygame.Color("WHITE"),
+                           (player.rect.centerx, player.rect.centery),
+                           self.cell_size // 3 * 2, width=2)  # player outline
 
         # draw attack
         if pygame.mouse.get_pressed()[0]:
             # send_attack(sock, round(degrees(player.angle)))
             pygame.draw.line(self.screen, "RED", (player.rect.centerx, player.rect.centery), (
                 player.rect.centerx + cos(player.angle) * self.attack_length,
-                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+                player.rect.centery + sin(player.angle) * self.attack_length),
+                             width=self.attack_width)
         else:
             pygame.draw.line(self.screen, "WHITE", (player.rect.centerx, player.rect.centery), (
                 player.rect.centerx + cos(player.angle) * self.attack_length,
-                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+                player.rect.centery + sin(player.angle) * self.attack_length),
+                             width=self.attack_width)
 
         # draw controller
         pygame.draw.circle(self.screen, "RED", (self.x_shoot, self.y_shoot),
@@ -313,7 +320,8 @@ def main(sock, extra_message, login):
 
     print(all_players_data)
 
-    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], all_players_data[login][2])
+    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1],
+                                                  all_players_data[login][2])
 
     # shift objects
     player.rect.x, player.rect.y = all_players_data[login][1]
@@ -330,7 +338,8 @@ def main(sock, extra_message, login):
     brawlers_from_nick[login] = player
     for nick in all_players_data:
         if nick != login:
-            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], all_players_data[nick][2])
+            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1],
+                                                        all_players_data[nick][2])
             enemy.rect.x -= x_shift
             enemy.rect.y -= y_shift
             player_group.add(enemy)
@@ -369,8 +378,11 @@ def main(sock, extra_message, login):
 
         # shift remaking
         if remake_shift:
-            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
-            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
+            new_x_shift = max(
+                min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
+            new_y_shift = max(
+                min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height),
+                0)
             if new_x_shift != x_shift or new_y_shift != y_shift:
                 print(new_x_shift, x_shift)
                 for nick in brawlers_from_nick.keys():
@@ -381,12 +393,12 @@ def main(sock, extra_message, login):
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
+        # draw controller and send attack if pressed
+        hud.draw(*pygame.mouse.get_pos(), player, sock)
         bullet_group.update()
         bullet_group.draw(screen)
         player_group.draw(screen)
 
-        # draw controller and send attack if pressed
-        hud.draw(*pygame.mouse.get_pos(), player, sock)
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -444,7 +456,8 @@ def search_window(chosen_brawler, sock, screen):
         points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
                    yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
         pygame.draw.polygon(screen, color='black', points=points)
-        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2], yd - sin(radians(angle + i * 30)) * radius[i % 2])
+        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2],
+                   yd - sin(radians(angle + i * 30)) * radius[i % 2])
                   for i in range(12)]
         pygame.draw.polygon(screen, color=(251, 196, 8), points=points)
         fg.draw(screen)
@@ -466,9 +479,11 @@ def end(sock, brawler_name, place, screen):
     back_button = Button(20, 630, 300, 64, text=f'menu', r=20)
     bg_sprites.add(background)
     fps = 30
-    select_button = Button(1080, 630, 400, 64, text='play again', r=20, sound='data/tones/select_brawler_01.mp3')
+    select_button = Button(1080, 630, 400, 64, text='play again', r=20,
+                           sound='data/tones/select_brawler_01.mp3')
     brawler = pygame.sprite.Sprite()
-    brawler.image = pygame.transform.scale(load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
+    brawler.image = pygame.transform.scale(
+        load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
     brawler.rect = brawler.image.get_rect()
     brawler.rect.x, brawler.rect.y = 500, 100
     fg = pygame.sprite.Group()
