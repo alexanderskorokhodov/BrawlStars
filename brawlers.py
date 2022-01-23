@@ -75,7 +75,7 @@ class Bullet(pygame.sprite.Sprite):
     # parent class of all bullets
     def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, tickrate, *group):
         super().__init__(*group)
-        self.image = load_image(f"brawlers/inGame/ColtAttack.png")
+        self.image = load_image(f"brawlers/inGame/ColtAttack2.png")
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.radius = radius
