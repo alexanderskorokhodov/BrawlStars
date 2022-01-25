@@ -49,10 +49,11 @@ def draw_additional(player: Brawler, surface: pygame.surface.Surface) -> None:
     pygame.draw.rect(surface, "red" if is_enemy else "Blue",
                      (player.rect.x - 25, player.rect.y - 25, player.rect.width * 2, 10),
                      1, border_radius=4)
-    pygame.draw.rect(surface, "red" if is_enemy else "Blue", (player.rect.x - 25, player.rect.y - 25,
-                                                              player.rect.width * 2 * max(
-                                                                  player.max_health - player.current_health,
-                                                                  0) / player.max_health, 10), border_radius=4)
+    pygame.draw.rect(surface, "red" if is_enemy else "Blue",
+                     (player.rect.x - 25, player.rect.y - 25,
+                      player.rect.width * 2 * max(
+                          player.current_health,
+                          0) / player.max_health, 10), border_radius=4)
     draw_outline(player.rect.x - 10, player.rect.y - 50, nick, surface, NICK_FONT)
 
 
@@ -88,7 +89,7 @@ class Players(pygame.sprite.Group):
         super(Players, self).draw(surface)
         for spr in self.sprites():
             draw_additional(spr, surface)
-            print(spr.rect.x, spr.rect.y)
+            # print(spr.rect.x, spr.rect.y)
 
 
 class Button:
@@ -150,7 +151,7 @@ class CrossHair:
         self.cell_size = player_size
         self.controller_size = 50
 
-    def draw(self, x, y, player, sock):
+    def draw(self, x, y, player):
         player.update_angle(self.x_shoot, self.y_shoot, x, y)  # update angle
 
         pygame.draw.circle(self.screen, pygame.Color("WHITE"),
@@ -397,9 +398,11 @@ def end(sock, brawler_name, place, screen):
     back_button = Button(20, 630, 300, 64, text=f'menu', r=20)
     bg_sprites.add(background)
     fps = 30
-    select_button = Button(1080, 630, 400, 64, text='play again', r=20, sound='data/tones/select_brawler_01.mp3')
+    select_button = Button(1080, 630, 400, 64, text='play again', r=20,
+                           sound='data/tones/select_brawler_01.mp3')
     brawler = pygame.sprite.Sprite()
-    brawler.image = pygame.transform.scale(load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
+    brawler.image = pygame.transform.scale(
+        load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
     brawler.rect = brawler.image.get_rect()
     brawler.rect.x, brawler.rect.y = 500, 100
     fg = pygame.sprite.Group()
@@ -442,7 +445,8 @@ def main(sock, extra_message, login):
 
     print(all_players_data)
     # print((*all_players_data[login][1], all_players_data[login][2:], login, False))
-    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], *all_players_data[login][2:], login,
+    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1],
+                                                  *all_players_data[login][2:], login,
                                                   False)
 
     # shift objects
@@ -460,7 +464,8 @@ def main(sock, extra_message, login):
     brawlers_from_nick[login] = player
     for nick in all_players_data:
         if nick != login:
-            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], *all_players_data[nick][2:], nick,
+            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1],
+                                                        *all_players_data[nick][2:], nick,
                                                         True)
             enemy.rect.x -= x_shift
             enemy.rect.y -= y_shift
@@ -486,23 +491,29 @@ def main(sock, extra_message, login):
                 if 'move' in changes[login]:
                     remake_shift = True
             for nick in changes.keys():
-                for to_change in changes[nick].keys():
-                    if to_change == 'move':
-                        brawlers_from_nick[nick].move(changes[nick][to_change])
-                    elif to_change == 'attack':
-                        print(1)
-                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
-                    elif to_change == 'died':
-                        if nick == login:
-                            running = False
-                            break
+                if nick == '__map__':
+                    for block_cords in changes['__map__']:
+                        print(block_cords[1] // cell_size, block_cords[0] // cell_size)
+                        field.destroy_tile(block_cords[1] // cell_size, block_cords[0] // cell_size)
+                else:
+                    for to_change in changes[nick].keys():
+                        if to_change == 'move':
+                            brawlers_from_nick[nick].move(changes[nick][to_change])
+                        elif to_change == 'attack':
+                            brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
+                        elif to_change == 'died':
+                            if nick == login:
+                                running = False
+                                break
 
         # shift remaking
         if remake_shift:
-            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
-            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
+            new_x_shift = max(
+                min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
+            new_y_shift = max(
+                min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height),
+                0)
             if new_x_shift != x_shift or new_y_shift != y_shift:
-                print(new_x_shift, x_shift)
                 for nick in brawlers_from_nick.keys():
                     brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
                     brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
@@ -511,12 +522,11 @@ def main(sock, extra_message, login):
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
+        hud.draw(*pygame.mouse.get_pos(), player)  # draw controller and send attack if pressed
         bullet_group.update()
         bullet_group.draw(screen)
         player_group.draw(screen)
 
-        # draw controller and send attack if pressed
-        hud.draw(*pygame.mouse.get_pos(), player, sock)
         pygame.display.flip()
         clock.tick(FPS)
 

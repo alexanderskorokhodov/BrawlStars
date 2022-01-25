@@ -58,6 +58,11 @@ class Shelly(Brawler):
     def __init__(self, x, y, level, current_health=None, nick='', is_enemy=True):
         super().__init__(x, y, 'Shelly', 3600, level, current_health, nick, is_enemy)
 
+    def attack(self, angle, bullet_group, tickrate=30):
+        for i in range(-2, 3,):
+            Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle + i * 5, 500,
+                   250, 320, tickrate, bullet_group)
+
 
 class Colt(Brawler):
     def __init__(self, x, y, level, current_health=None, nick='', is_enemy=True):
@@ -65,7 +70,7 @@ class Colt(Brawler):
 
     def attack(self, angle, bullet_group, tickrate=30):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, 500,
-               250, 400, tickrate, bullet_group)
+               500, 360, tickrate, bullet_group)
 
 
 class Bull(Brawler):

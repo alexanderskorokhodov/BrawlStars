@@ -100,6 +100,8 @@ class Brawler(Sprite):
         self.power = cur.execute(
             f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[
             0]
+        self.health += (self.power - 1) * self.health // 20
+        self.attack_damage += (self.power - 1) * self.attack_damage // 20
         con.close()
 
     def from_type_of_move_to_cords(self, type_of_move, tickrate):
@@ -137,6 +139,11 @@ class Shelly(Brawler):
 
     def __init__(self, x, y, login, *group, bullet_group=None):
         super().__init__(x, y, login, bullet_group, *group)
+
+    def attack(self, angle, tickrate):
+        for i in range(-2, 3,):
+            Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle + i * 5, self.attack_speed,
+                   self.attack_range, self.attack_damage, tickrate, self.bullet_group)
 
 
 class Colt(Brawler):
