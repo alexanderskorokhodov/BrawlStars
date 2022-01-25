@@ -1,5 +1,5 @@
 from json import loads
-from math import cos, sin, degrees, radians
+from math import degrees
 
 from brawlers import *
 from commands import *
@@ -426,3 +426,100 @@ def end(sock, brawler_name, place, screen):
     if res:
         res, extra_message = search_window(brawler_name, sock, screen)
     return res, sock, extra_message
+
+
+def main(sock, extra_message, login):
+    pygame.init()
+    clock = pygame.time.Clock()
+    screen = pygame.display.set_mode(size)
+    running = True
+
+    # get data
+    msc = MessageCatcherSender(sock, extra_message)
+    field = Map(msc.get_map_name())
+    all_players_data = msc.get_brawlers_start_info()
+    msc.setblocking(False)
+
+    print(all_players_data)
+    # print((*all_players_data[login][1], all_players_data[login][2:], login, False))
+    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], *all_players_data[login][2:], login,
+                                                  False)
+
+    # shift objects
+    player.rect.x, player.rect.y = all_players_data[login][1]
+    x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
+    y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
+    player.rect.x -= x_shift
+    player.rect.y -= y_shift
+
+    bullet_group = pygame.sprite.Group()
+    player_group = Players()
+    player_group.add(player)
+
+    brawlers_from_nick = {}
+    brawlers_from_nick[login] = player
+    for nick in all_players_data:
+        if nick != login:
+            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], *all_players_data[nick][2:], nick,
+                                                        True)
+            enemy.rect.x -= x_shift
+            enemy.rect.y -= y_shift
+            player_group.add(enemy)
+    hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False, sock, None, screen
+            elif event.type == pygame.MOUSEBUTTONUP:
+                hud.shoot(*pygame.mouse.get_pos(), player, sock)
+
+        screen.fill((0, 0, 0))
+        # send shift
+        send_move(sock)
+
+        # get changes
+        changes = msc.get_brawlers_changes()
+        remake_shift = False
+        if changes:
+            print(changes)
+            if login in changes:
+                if 'move' in changes[login]:
+                    remake_shift = True
+            for nick in changes.keys():
+                for to_change in changes[nick].keys():
+                    if to_change == 'move':
+                        brawlers_from_nick[nick].move(changes[nick][to_change])
+                    elif to_change == 'attack':
+                        print(1)
+                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
+                    elif to_change == 'died':
+                        if nick == login:
+                            running = False
+                            break
+
+        # shift remaking
+        if remake_shift:
+            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
+            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
+            if new_x_shift != x_shift or new_y_shift != y_shift:
+                print(new_x_shift, x_shift)
+                for nick in brawlers_from_nick.keys():
+                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
+                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
+                x_shift = new_x_shift
+                y_shift = new_y_shift
+
+        # draw objects
+        field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
+        bullet_group.update()
+        bullet_group.draw(screen)
+        player_group.draw(screen)
+
+        # draw controller and send attack if pressed
+        hud.draw(*pygame.mouse.get_pos(), player, sock)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    msc.setblocking(True)
+    place = msc.get_end_game()
+    return True, sock, all_players_data[login][0], screen, place
