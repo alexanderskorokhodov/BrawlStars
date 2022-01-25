@@ -1,5 +1,5 @@
 from json import loads
-from math import degrees
+from math import cos, sin, degrees, radians
 
 from brawlers import *
 from commands import *
@@ -92,7 +92,8 @@ class Players(pygame.sprite.Group):
 
 
 class Button:
-    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0, text_color=pygame.Color("Black"), bold=False,
+    def __init__(self, x, y, w, h, text='', color=COLOR_DEFAULT, r=0,
+                 text_color=pygame.Color("Black"), bold=False,
                  sound='data/tones/menu_click_08.mp3'):
         self.color = color
         self.og_col = color
@@ -109,15 +110,18 @@ class Button:
     def draw(self, win, outline=None):
         # Call this method to draw the button on the screen
         if outline:
-            pygame.draw.rect(win, outline, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
+            pygame.draw.rect(win, outline,
+                             (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 3,
                              border_radius=self.radius)
-        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0, border_radius=self.radius)
+        pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height), 0,
+                         border_radius=self.radius)
 
         if self.text != '':
             font = MAIN_FONT
             text = font.render(self.text, self.bold, self.textColor)
             win.blit(text, (
-                self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+                self.x + (self.width / 2 - text.get_width() / 2),
+                self.y + (self.height / 2 - text.get_height() / 2)))
 
     def is_over(self, pos):
         # Pos is the mouse position or a tuple of (x,y) coordinates
@@ -149,19 +153,22 @@ class CrossHair:
     def draw(self, x, y, player, sock):
         player.update_angle(self.x_shoot, self.y_shoot, x, y)  # update angle
 
-        pygame.draw.circle(self.screen, pygame.Color("WHITE"), (player.rect.centerx, player.rect.centery),
-                           self.cell_size, width=2)  # player outline
+        pygame.draw.circle(self.screen, pygame.Color("WHITE"),
+                           (player.rect.centerx, player.rect.centery),
+                           self.cell_size // 3 * 2, width=2)  # player outline
 
         # draw attack
         if pygame.mouse.get_pressed()[0]:
             # send_attack(sock, round(degrees(player.angle)))
             pygame.draw.line(self.screen, "RED", (player.rect.centerx, player.rect.centery), (
                 player.rect.centerx + cos(player.angle) * self.attack_length,
-                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+                player.rect.centery + sin(player.angle) * self.attack_length),
+                             width=self.attack_width)
         else:
             pygame.draw.line(self.screen, "WHITE", (player.rect.centerx, player.rect.centery), (
                 player.rect.centerx + cos(player.angle) * self.attack_length,
-                player.rect.centery + sin(player.angle) * self.attack_length), width=self.attack_width)
+                player.rect.centery + sin(player.angle) * self.attack_length),
+                             width=self.attack_width)
 
         # draw controller
         pygame.draw.circle(self.screen, "RED", (self.x_shoot, self.y_shoot),
@@ -367,7 +374,8 @@ def search_window(chosen_brawler, sock, screen):
         points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
                    yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
         pygame.draw.polygon(screen, color='black', points=points)
-        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2], yd - sin(radians(angle + i * 30)) * radius[i % 2])
+        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2],
+                   yd - sin(radians(angle + i * 30)) * radius[i % 2])
                   for i in range(12)]
         pygame.draw.polygon(screen, color=(251, 196, 8), points=points)
         fg.draw(screen)
@@ -418,100 +426,3 @@ def end(sock, brawler_name, place, screen):
     if res:
         res, extra_message = search_window(brawler_name, sock, screen)
     return res, sock, extra_message
-
-
-def main(sock, extra_message, login):
-    pygame.init()
-    clock = pygame.time.Clock()
-    screen = pygame.display.set_mode(size)
-    running = True
-
-    # get data
-    msc = MessageCatcherSender(sock, extra_message)
-    field = Map(msc.get_map_name())
-    all_players_data = msc.get_brawlers_start_info()
-    msc.setblocking(False)
-
-    print(all_players_data)
-    # print((*all_players_data[login][1], all_players_data[login][2:], login, False))
-    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], *all_players_data[login][2:], login,
-                                                  False)
-
-    # shift objects
-    player.rect.x, player.rect.y = all_players_data[login][1]
-    x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
-    y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
-    player.rect.x -= x_shift
-    player.rect.y -= y_shift
-
-    bullet_group = pygame.sprite.Group()
-    player_group = Players()
-    player_group.add(player)
-
-    brawlers_from_nick = {}
-    brawlers_from_nick[login] = player
-    for nick in all_players_data:
-        if nick != login:
-            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], *all_players_data[nick][2:], nick,
-                                                        True)
-            enemy.rect.x -= x_shift
-            enemy.rect.y -= y_shift
-            player_group.add(enemy)
-    hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False, sock, None, screen
-            elif event.type == pygame.MOUSEBUTTONUP:
-                hud.shoot(*pygame.mouse.get_pos(), player, sock)
-
-        screen.fill((0, 0, 0))
-        # send shift
-        send_move(sock)
-
-        # get changes
-        changes = msc.get_brawlers_changes()
-        remake_shift = False
-        if changes:
-            print(changes)
-            if login in changes:
-                if 'move' in changes[login]:
-                    remake_shift = True
-            for nick in changes.keys():
-                for to_change in changes[nick].keys():
-                    if to_change == 'move':
-                        brawlers_from_nick[nick].move(changes[nick][to_change])
-                    elif to_change == 'attack':
-                        print(1)
-                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
-                    elif to_change == 'died':
-                        if nick == login:
-                            running = False
-                            break
-
-        # shift remaking
-        if remake_shift:
-            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
-            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
-            if new_x_shift != x_shift or new_y_shift != y_shift:
-                print(new_x_shift, x_shift)
-                for nick in brawlers_from_nick.keys():
-                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
-                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
-                x_shift = new_x_shift
-                y_shift = new_y_shift
-
-        # draw objects
-        field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
-        bullet_group.update()
-        bullet_group.draw(screen)
-        player_group.draw(screen)
-
-        # draw controller and send attack if pressed
-        hud.draw(*pygame.mouse.get_pos(), player, sock)
-        pygame.display.flip()
-        clock.tick(FPS)
-
-    msc.setblocking(True)
-    place = msc.get_end_game()
-    return True, sock, all_players_data[login][0], screen, place

@@ -26,7 +26,8 @@ def load_image(name, color_key=None):
 class Brawler(pygame.sprite.Sprite):
     def __init__(self, x_, y_, name, health, level, current_health, nick, is_enemy):
         super().__init__()
-        self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"), (cell_size, cell_size))
+        self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"),
+                                            (cell_size, cell_size))
         self.rect = self.image.get_rect()
         self.name = name
         self.rect.x, self.rect.y = x_, y_
@@ -64,7 +65,7 @@ class Colt(Brawler):
 
     def attack(self, angle, bullet_group, tickrate=30):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, 500,
-               250, 200, tickrate, bullet_group)
+               250, 400, tickrate, bullet_group)
 
 
 class Bull(Brawler):
@@ -76,7 +77,7 @@ class Bullet(pygame.sprite.Sprite):
     # parent class of all bullets
     def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, tickrate, *group):
         super().__init__(*group)
-        self.image = load_image(f"brawlers/inGame/ColtAttack.png")
+        self.image = load_image(f"brawlers/inGame/ColtAttack2.png")
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
         self.radius = radius
