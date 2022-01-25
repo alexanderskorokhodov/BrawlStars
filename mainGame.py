@@ -1,5 +1,5 @@
 from json import loads
-from math import cos, sin, degrees, radians
+from math import degrees
 
 from brawlers import *
 from commands import *
@@ -7,9 +7,88 @@ from commands import *
 FIND_FONT = pygame.font.Font('./data/mainFont.ttf', 50)
 COLOR_DEFAULT = pygame.Color(102, 102, 190)
 MAIN_FONT = pygame.font.Font('./data/mainFont.ttf', 36)
+NICK_FONT = pygame.font.Font('./data/mainFont.ttf', 20)
+size = width, height = 1500, 700
+tile_images = {
+    'wall': load_image('maps/tiles/wall.png'),
+    'ground': load_image('maps/tiles/ground.png'),
+    'skeleton': load_image('maps/tiles/skeleton.png'),
+    'bushes': load_image('maps/tiles/bushes.png'),
+    'water': load_image('maps/tiles/river.png'),
+    'chest': load_image('maps/tiles/chest.png')
+}
+tile_decode = {'X': 'bushes',
+               '.': 'ground',
+               '#': 'wall',
+               'S': 'skeleton',
+               'P': 'ground',
+               'C': 'chest',
+               '-': 'water'}
+BRAWLERS = {'shelly': Shelly, 'colt': Colt, 'bull': Bull}
+FPS = 30
 ev = None
+bs = {'Shelly': 1, 'Colt': 2, 'Bull': 3}
 
-bs = {'Shelly': 1, 'Colt': 2, 'Bull': 2}
+
+def draw_outline(x, y, string, win, font):
+    def draw_text(x_, y_, s, col, window, bold=True):
+        text = font.render(s, bold, col)
+        window.blit(text, (x_, y_))
+
+    r = 4
+    draw_text(x - 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y + r, string, 'black', win)
+    draw_text(x - 1, y + r, string, 'black', win)
+    draw_text(x, y, string, 'white', win)
+
+
+def draw_additional(player: Brawler, surface: pygame.surface.Surface) -> None:
+    nick = player.nick
+    is_enemy = player.is_enemy
+    pygame.draw.rect(surface, "red" if is_enemy else "Blue",
+                     (player.rect.x - 25, player.rect.y - 25, player.rect.width * 2, 10),
+                     1, border_radius=4)
+    pygame.draw.rect(surface, "red" if is_enemy else "Blue", (player.rect.x - 25, player.rect.y - 25,
+                                                              player.rect.width * 2 * max(
+                                                                  player.max_health - player.current_health,
+                                                                  0) / player.max_health, 10), border_radius=4)
+    draw_outline(player.rect.x - 10, player.rect.y - 50, nick, surface, NICK_FONT)
+
+
+def load_image(name, color_key=None):
+    fullname = os.path.join('data', name)
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    if color_key is not None:
+        image = image.convert()
+        if color_key == -1:
+            color_key = image.get_at((0, 0))
+        image.set_colorkey(color_key)
+    else:
+        image = image.convert_alpha()
+    return image
+
+
+def load_map(map_name):
+    filename = "data/maps/" + map_name
+    with open(filename, 'r') as mapFile:
+        _map = [i.strip() for i in mapFile]
+    return _map
+
+
+def terminate():
+    return True  # fix
+
+
+class Players(pygame.sprite.Group):
+    def draw(self, surface):
+        super(Players, self).draw(surface)
+        for spr in self.sprites():
+            draw_additional(spr, surface)
+            print(spr.rect.x, spr.rect.y)
 
 
 class Button:
@@ -55,19 +134,6 @@ class Button:
                     if self.y < pos[1] < self.y + self.height:
                         self.sound.play()
                         return True
-
-
-def draw_outline(x, y, string, win, font):
-    def draw_text(x_, y_, s, col, window, bold=True):
-        text = font.render(s, bold, col)
-        window.blit(text, (x_, y_))
-
-    r = 4
-    draw_text(x - 1, y - r + 2, string, 'black', win)
-    draw_text(x + 1, y - r + 2, string, 'black', win)
-    draw_text(x + 1, y + r, string, 'black', win)
-    draw_text(x - 1, y + r, string, 'black', win)
-    draw_text(x, y, string, 'white', win)
 
 
 class CrossHair:
@@ -213,33 +279,6 @@ class Map(pygame.sprite.Sprite):
         self.field[x][y] = '.'
 
 
-def load_image(name, color_key=None):
-    fullname = os.path.join('data', name)
-    if not os.path.isfile(fullname):
-        print(f"Файл с изображением '{fullname}' не найден")
-        sys.exit()
-    image = pygame.image.load(fullname)
-    if color_key is not None:
-        image = image.convert()
-        if color_key == -1:
-            color_key = image.get_at((0, 0))
-        image.set_colorkey(color_key)
-    else:
-        image = image.convert_alpha()
-    return image
-
-
-def load_map(map_name):
-    filename = "data/maps/" + map_name
-    with open(filename, 'r') as mapFile:
-        _map = [i.strip() for i in mapFile]
-    return _map
-
-
-def terminate():
-    return True  # fix
-
-
 def send_attack(sock, angle):
     sock.sendall((CMD_GAME_attack + str(angle) + Delimiter).encode())
 
@@ -277,122 +316,6 @@ def send_move(sock):
         elif x == -1 and y == -1:
             type_of_move = 7
     sock.sendall((CMD_GAME_move + str(type_of_move) + Delimiter).encode())
-
-
-size = width, height = 1500, 700
-tile_images = {
-    'wall': load_image('maps/tiles/wall.png'),
-    'ground': load_image('maps/tiles/ground.png'),
-    'skeleton': load_image('maps/tiles/skeleton.png'),
-    'bushes': load_image('maps/tiles/bushes.png'),
-    'water': load_image('maps/tiles/river.png'),
-    'chest': load_image('maps/tiles/chest.png')
-}
-tile_decode = {'X': 'bushes',
-               '.': 'ground',
-               '#': 'wall',
-               'S': 'skeleton',
-               'P': 'ground',
-               'C': 'chest',
-               '-': 'water'}
-BRAWLERS = {'shelly': Shelly, 'colt': Colt, 'bull': Bull}
-FPS = 30
-
-
-def main(sock, extra_message, login):
-    pygame.init()
-    clock = pygame.time.Clock()
-    screen = pygame.display.set_mode(size)
-    running = True
-
-    # get data
-    msc = MessageCatcherSender(sock, extra_message)
-    field = Map(msc.get_map_name())
-    all_players_data = msc.get_brawlers_start_info()
-    msc.setblocking(False)
-
-    print(all_players_data)
-
-    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], all_players_data[login][2])
-
-    # shift objects
-    player.rect.x, player.rect.y = all_players_data[login][1]
-    x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
-    y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
-    player.rect.x -= x_shift
-    player.rect.y -= y_shift
-
-    bullet_group = pygame.sprite.Group()
-    player_group = pygame.sprite.Group()
-    player_group.add(player)
-
-    brawlers_from_nick = {}
-    brawlers_from_nick[login] = player
-    for nick in all_players_data:
-        if nick != login:
-            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], all_players_data[nick][2])
-            enemy.rect.x -= x_shift
-            enemy.rect.y -= y_shift
-            player_group.add(enemy)
-            brawlers_from_nick[nick] = enemy
-    hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                return False, sock, None, screen
-            elif event.type == pygame.MOUSEBUTTONUP:
-                hud.shoot(*pygame.mouse.get_pos(), player, sock)
-
-        screen.fill((0, 0, 0))
-        # send shift
-        send_move(sock)
-
-        # get changes
-        changes = msc.get_brawlers_changes()
-        remake_shift = False
-        if changes:
-            print(changes)
-            if login in changes:
-                if 'move' in changes[login]:
-                    remake_shift = True
-            for nick in changes.keys():
-                for to_change in changes[nick].keys():
-                    if to_change == 'move':
-                        brawlers_from_nick[nick].move(changes[nick][to_change])
-                    elif to_change == 'attack':
-                        print(1)
-                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
-                    elif to_change == 'died':
-                        if nick == login:
-                            running = False
-                            break
-
-        # shift remaking
-        if remake_shift:
-            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
-            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
-            if new_x_shift != x_shift or new_y_shift != y_shift:
-                print(new_x_shift, x_shift)
-                for nick in brawlers_from_nick.keys():
-                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
-                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
-                x_shift = new_x_shift
-                y_shift = new_y_shift
-
-        # draw objects
-        field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
-        bullet_group.update()
-        bullet_group.draw(screen)
-        player_group.draw(screen)
-
-        # draw controller and send attack if pressed
-        hud.draw(*pygame.mouse.get_pos(), player, sock)
-        pygame.display.flip()
-        clock.tick(FPS)
-
-    msc.setblocking(True)
-    place = msc.get_end_game()
-    return True, sock, all_players_data[login][0], screen, place
 
 
 def search_window(chosen_brawler, sock, screen):
@@ -497,7 +420,98 @@ def end(sock, brawler_name, place, screen):
     return res, sock, extra_message
 
 
-if __name__ == '__main__':
-    size = (1500, 700)
+def main(sock, extra_message, login):
+    pygame.init()
+    clock = pygame.time.Clock()
     screen = pygame.display.set_mode(size)
-    end('', 'Shelly', screen=screen)
+    running = True
+
+    # get data
+    msc = MessageCatcherSender(sock, extra_message)
+    field = Map(msc.get_map_name())
+    all_players_data = msc.get_brawlers_start_info()
+    msc.setblocking(False)
+
+    print(all_players_data)
+    # print((*all_players_data[login][1], all_players_data[login][2:], login, False))
+    player = BRAWLERS[all_players_data[login][0]](*all_players_data[login][1], *all_players_data[login][2:], login,
+                                                  False)
+
+    # shift objects
+    player.rect.x, player.rect.y = all_players_data[login][1]
+    x_shift = max(min(player.rect.x - width // 2, field.width * field.cell_size - width), 0)
+    y_shift = max(min(player.rect.y - height // 2, field.height * field.cell_size - height), 0)
+    player.rect.x -= x_shift
+    player.rect.y -= y_shift
+
+    bullet_group = pygame.sprite.Group()
+    player_group = Players()
+    player_group.add(player)
+
+    brawlers_from_nick = {}
+    brawlers_from_nick[login] = player
+    for nick in all_players_data:
+        if nick != login:
+            enemy = BRAWLERS[all_players_data[nick][0]](*all_players_data[nick][1], *all_players_data[nick][2:], nick,
+                                                        True)
+            enemy.rect.x -= x_shift
+            enemy.rect.y -= y_shift
+            player_group.add(enemy)
+    hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return False, sock, None, screen
+            elif event.type == pygame.MOUSEBUTTONUP:
+                hud.shoot(*pygame.mouse.get_pos(), player, sock)
+
+        screen.fill((0, 0, 0))
+        # send shift
+        send_move(sock)
+
+        # get changes
+        changes = msc.get_brawlers_changes()
+        remake_shift = False
+        if changes:
+            print(changes)
+            if login in changes:
+                if 'move' in changes[login]:
+                    remake_shift = True
+            for nick in changes.keys():
+                for to_change in changes[nick].keys():
+                    if to_change == 'move':
+                        brawlers_from_nick[nick].move(changes[nick][to_change])
+                    elif to_change == 'attack':
+                        print(1)
+                        brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
+                    elif to_change == 'died':
+                        if nick == login:
+                            running = False
+                            break
+
+        # shift remaking
+        if remake_shift:
+            new_x_shift = max(min(player.rect.x + x_shift - width // 2, field.width * field.cell_size - width), 0)
+            new_y_shift = max(min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height), 0)
+            if new_x_shift != x_shift or new_y_shift != y_shift:
+                print(new_x_shift, x_shift)
+                for nick in brawlers_from_nick.keys():
+                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
+                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
+                x_shift = new_x_shift
+                y_shift = new_y_shift
+
+        # draw objects
+        field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
+        bullet_group.update()
+        bullet_group.draw(screen)
+        player_group.draw(screen)
+
+        # draw controller and send attack if pressed
+        hud.draw(*pygame.mouse.get_pos(), player, sock)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    msc.setblocking(True)
+    place = msc.get_end_game()
+    return True, sock, all_players_data[login][0], screen, place

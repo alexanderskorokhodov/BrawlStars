@@ -24,7 +24,7 @@ def load_image(name, color_key=None):
 
 
 class Brawler(pygame.sprite.Sprite):
-    def __init__(self, x_, y_, name, health, level):
+    def __init__(self, x_, y_, name, health, level, current_health, nick, is_enemy):
         super().__init__()
         self.image = pygame.transform.scale(load_image(f"brawlers/inGame/{name}.png"), (cell_size, cell_size))
         self.rect = self.image.get_rect()
@@ -33,8 +33,10 @@ class Brawler(pygame.sprite.Sprite):
         self.angle = 0
         self.is_shoot = False
         self.is_super = False
+        self.nick = nick
+        self.is_enemy = is_enemy
         self.max_health = health + (level - 1) * (health // 20)
-        self.current_health = self.max_health
+        self.current_health = current_health if current_health else self.max_health
 
     def move(self, cords):
         self.rect.x += cords[0]
@@ -52,13 +54,13 @@ class Brawler(pygame.sprite.Sprite):
 
 
 class Shelly(Brawler):
-    def __init__(self, x, y, level):
-        super().__init__(x, y, 'Shelly', 3600, level)
+    def __init__(self, x, y, level, current_health=None, nick='', is_enemy=True):
+        super().__init__(x, y, 'Shelly', 3600, level, current_health, nick, is_enemy)
 
 
 class Colt(Brawler):
-    def __init__(self, x, y, level):
-        super().__init__(x, y, 'Colt', 2800, level)
+    def __init__(self, x, y, level, current_health=None, nick='', is_enemy=True):
+        super().__init__(x, y, 'Colt', 2800, level, current_health, nick, is_enemy)
 
     def attack(self, angle, bullet_group, tickrate=30):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, 500,
@@ -66,8 +68,8 @@ class Colt(Brawler):
 
 
 class Bull(Brawler):
-    def __init__(self, x, y, level):
-        super().__init__(x, y, 'Bull', 5000, level)
+    def __init__(self, x, y, level, current_health=None, nick='', is_enemy=True):
+        super().__init__(x, y, 'Bull', 5000, level, current_health, nick, is_enemy)
 
 
 class Bullet(pygame.sprite.Sprite):
