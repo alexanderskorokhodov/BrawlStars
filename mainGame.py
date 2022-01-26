@@ -28,7 +28,7 @@ tile_decode = {'X': 'bushes',
 BRAWLERS = {'shelly': Shelly, 'colt': Colt, 'bull': Bull}
 FPS = 30
 ev = None
-bs = {'Shelly': 1, 'Colt': 2, 'Bull': 3}
+bs = {'Shelly': 1, 'Colt': 3, 'Bull': 4}
 
 
 def draw_outline(x, y, string, win, font):
@@ -339,7 +339,21 @@ def send_move(sock):
     sock.sendall((CMD_GAME_move + str(type_of_move) + Delimiter).encode())
 
 
-def search_window(chosen_brawler, sock, screen):
+def search_window(chosen_brawler, sock, screen, extra_text=''):
+    def get_player_info(sock):
+        message = extra_text + sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
+        while Delimiter not in message:
+            message += sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
+        if message == CMD_PLAYER_INFO_IN_MENU:
+            data = sock.recv(32).decode()
+            while data[-1] != Delimiter:
+                data += sock.recv(32).decode()
+            info = loads(data[:-1])
+            return info
+        else:
+            print(message)
+
+    print(get_player_info(sock), 1)  # we don't use in, it is for skipping extra commands
     chosen_brawler_id = bs[chosen_brawler.title()]
     sock.sendall((CMD_FIND_MATCH + '0' + str(chosen_brawler_id // 10) + str(
         chosen_brawler_id % 10) + Delimiter).encode())
@@ -400,7 +414,7 @@ def search_window(chosen_brawler, sock, screen):
     return False, ''
 
 
-def end(sock, brawler_name, place, screen):
+def end(sock, brawler_name, place, screen, extra_text):
     running = True
     global ev
     clock = pygame.time.Clock()
@@ -440,7 +454,7 @@ def end(sock, brawler_name, place, screen):
         pygame.display.flip()
         clock.tick(fps)
     if res:
-        res, extra_message = search_window(brawler_name, sock, screen)
+        res, extra_message = search_window(brawler_name, sock, screen, extra_text=extra_text)
     return res, sock, extra_message
 
 
@@ -483,11 +497,13 @@ def main(sock, extra_message, login):
             enemy.rect.x -= x_shift
             enemy.rect.y -= y_shift
             player_group.add(enemy)
+            brawlers_from_nick[nick] = enemy
     hud = CrossHair(screen, attack_length=100, attack_width=30, player_size=cell_size)
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                return False, sock, None, screen
+                return False, sock, None, screen, None, ''
             elif event.type == pygame.MOUSEBUTTONUP:
                 hud.shoot(*pygame.mouse.get_pos(), player, sock)
 
@@ -514,10 +530,16 @@ def main(sock, extra_message, login):
                             brawlers_from_nick[nick].move(changes[nick][to_change])
                         elif to_change == 'attack':
                             brawlers_from_nick[nick].attack(changes[nick][to_change], bullet_group)
+                        elif to_change == 'health':
+                            brawlers_from_nick[nick].current_health += changes[nick][to_change]
                         elif to_change == 'died':
                             if nick == login:
+                                place = changes[nick][to_change]
                                 running = False
+                                print('game ends')
                                 break
+                            else:
+                                brawlers_from_nick[nick].kill()
 
         # shift remaking
         if remake_shift:
@@ -527,11 +549,19 @@ def main(sock, extra_message, login):
                 min(player.rect.y + y_shift - height // 2, field.height * field.cell_size - height),
                 0)
             if new_x_shift != x_shift or new_y_shift != y_shift:
-                for nick in brawlers_from_nick.keys():
-                    brawlers_from_nick[nick].rect.x -= new_x_shift - x_shift
-                    brawlers_from_nick[nick].rect.y -= new_y_shift - y_shift
+                for brawler in player_group:
+                    brawler.rect.x -= new_x_shift - x_shift
+                    brawler.rect.y -= new_y_shift - y_shift
                 x_shift = new_x_shift
                 y_shift = new_y_shift
+
+        # collision
+        for bullet, damaged_players in pygame.sprite.groupcollide(bullet_group, player_group, False,
+                                                    False).items():
+            for damaged_player in damaged_players:
+                if bullet.owner == damaged_player.nick:
+                    continue
+                bullet.kill()
 
         # draw objects
         field.draw_tiles(x_shift=x_shift, y_shift=y_shift, screen=screen)
@@ -544,5 +574,5 @@ def main(sock, extra_message, login):
         clock.tick(FPS)
 
     msc.setblocking(True)
-    place = msc.get_end_game()
-    return True, sock, all_players_data[login][0], screen, place
+    print('place:', place)
+    return True, sock, all_players_data[login][0], screen, place, msc.extra_text

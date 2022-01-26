@@ -61,7 +61,7 @@ class Shelly(Brawler):
     def attack(self, angle, bullet_group, tickrate=30):
         for i in range(-2, 3,):
             Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle + i * 5, 500,
-                   250, 320, tickrate, bullet_group)
+                   250, self.nick, tickrate, bullet_group)
 
 
 class Colt(Brawler):
@@ -70,7 +70,7 @@ class Colt(Brawler):
 
     def attack(self, angle, bullet_group, tickrate=30):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, 500,
-               500, 360, tickrate, bullet_group)
+               500, self.nick, tickrate, bullet_group)
 
 
 class Bull(Brawler):
@@ -80,8 +80,9 @@ class Bull(Brawler):
 
 class Bullet(pygame.sprite.Sprite):
     # parent class of all bullets
-    def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, tickrate, *group):
+    def __init__(self, x, y, radius, angle, bullet_speed, max_range, owner, tickrate, *group):
         super().__init__(*group)
+        self.owner = owner
         self.image = load_image(f"brawlers/inGame/ColtAttack2.png")
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = x, y
@@ -91,7 +92,6 @@ class Bullet(pygame.sprite.Sprite):
         self.x_step = self.speed * cos(radians(self.angle))
         self.y_step = self.speed * sin(radians(self.angle))
         self.max_range = max_range
-        self.damage = damage
         self.current_range = 0
 
     def update(self, *args, **kwargs) -> None:

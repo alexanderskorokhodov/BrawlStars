@@ -85,8 +85,9 @@ class Brawler(Sprite):
     attributes = ['id', 'health', 'speed', 'attack_range', 'attack_reload_time',
                   'attack_amount_of_bullets', 'attack_damage', 'attack_speed']
 
-    def __init__(self, x, y, login, bullet_group, *group):
+    def __init__(self, x, y, login, bullet_group, *group, is_bot=False):
         super().__init__(*group)
+        self.is_bot = is_bot
         self.bullet_group = bullet_group
         self.player_name = login
         self.rect = Rect(x, y, cell_size, cell_size)
@@ -94,13 +95,16 @@ class Brawler(Sprite):
         con = sqlite3.connect("BrawlStars.db")
         cur = con.cursor()
         for attribute in self.attributes:
-            # print(f'self.{attribute} = cur.execute(f"SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
-            exec(
-                f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers WHERE name = \'{self.class_name}\'").fetchone()[0]')
-        self.power = cur.execute(
-            f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}' AND brawler_id = {self.id}").fetchone()[
-            0]
+            exec(f'self.{attribute} = cur.execute("SELECT {attribute} FROM brawlers '
+                 f'WHERE name = \'{self.class_name}\'").fetchone()[0]')
+        if is_bot:
+            self.power = 1
+        else:
+            self.power = cur.execute(
+                f"SELECT power FROM players_brawlers WHERE login = '{self.player_name}'"
+                f" AND brawler_id = {self.id}").fetchone()[0]
         self.health += (self.power - 1) * self.health // 20
+        self.current_health = self.health
         self.attack_damage += (self.power - 1) * self.attack_damage // 20
         con.close()
 
@@ -134,38 +138,44 @@ class Brawler(Sprite):
         self.rect.x += x
         self.rect.y += y
 
+    def get_damage(self, damage):
+        self.current_health -= damage
+        return max(self.current_health, 0)
+
 
 class Shelly(Brawler):
 
-    def __init__(self, x, y, login, *group, bullet_group=None):
-        super().__init__(x, y, login, bullet_group, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None, is_bot=False):
+        super().__init__(x, y, login, bullet_group, *group, is_bot=is_bot)
 
     def attack(self, angle, tickrate):
-        for i in range(-2, 3,):
-            Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle + i * 5, self.attack_speed,
-                   self.attack_range, self.attack_damage, tickrate, self.bullet_group)
+        for i in range(-2, 3, ):
+            Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle + i * 5,
+                   self.attack_speed,
+                   self.attack_range, self.attack_damage, self.player_name, tickrate, self.bullet_group)
 
 
 class Colt(Brawler):
 
-    def __init__(self, x, y, login, *group, bullet_group=None):
-        super().__init__(x, y, login, bullet_group, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None, is_bot=False):
+        super().__init__(x, y, login, bullet_group, *group, is_bot=is_bot)
 
     def attack(self, angle, tickrate):
         Bullet(self.rect.centerx, self.rect.centery, cell_size // 4, angle, self.attack_speed,
-               self.attack_range, self.attack_damage, tickrate, self.bullet_group)
+               self.attack_range, self.attack_damage, self.player_name, tickrate, self.bullet_group)
 
 
 class Bull(Brawler):
 
-    def __init__(self, x, y, login, *group, bullet_group=None):
-        super().__init__(x, y, login, bullet_group, *group)
+    def __init__(self, x, y, login, *group, bullet_group=None, is_bot=False):
+        super().__init__(x, y, login, bullet_group, *group, is_bot=is_bot)
 
 
 class Bullet(Sprite):
     # parent class of all bullets
-    def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, tickrate, *group):
+    def __init__(self, x, y, radius, angle, bullet_speed, max_range, damage, owner, tickrate, *group):
         super().__init__(*group)
+        self.owner = owner
         self.rect = Rect(x, y, radius * 2, radius * 2)
         self.radius = radius
         self.angle = angle

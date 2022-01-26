@@ -89,12 +89,12 @@ def log_in(sock, id):
 
         if successful_authorization:
             players_sockets[login] = sock
-            menu(sock, id, login)
+            menu(login)
     except ConnectionError:
         sock.close()
 
 
-def menu(sock, id, login):
+def menu(login):
     def get_player_info(login):
         info = {}
         con = sqlite3.connect("BrawlStars.db")
@@ -126,10 +126,12 @@ def menu(sock, id, login):
             return True
 
     try:
+        print(login + ' in menu')
         player_info = get_player_info(login)
-        sock.setblocking(True)
-        sock.sendall((CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
-        mes = sock.recv(16).decode()
+        players_sockets[login].setblocking(True)
+        players_sockets[login].sendall(
+            (CMD_PLAYER_INFO_IN_MENU + dumps(player_info) + Delimiter).encode())
+        mes = players_sockets[login].recv(16).decode()
         if len(mes) == 0:
             close_connection(login)
         elif mes[-1] == Delimiter:
@@ -139,7 +141,8 @@ def menu(sock, id, login):
                     brawler_id = int(mes[len(CMD_FIND_MATCH) + 1:-1])
                     if check_player_brawler(login, brawler_id):
                         rooms[event_id].append((login, brawler_id))
-                        sock.sendall((CMD_PLAYERS_IN_ROOM + '1/10' + Delimiter).encode())
+                        players_sockets[login].sendall(
+                            (CMD_PLAYERS_IN_ROOM + '1/10' + Delimiter).encode())
                         if len(rooms[event_id]) == 1:
                             match_finder(event_id)
                     else:
@@ -151,6 +154,7 @@ def menu(sock, id, login):
             elif False:
                 pass
             else:
+                print('пришла не та команда(баг с командами атаки после игры)')
                 close_connection(login)
 
         else:
@@ -161,7 +165,6 @@ def menu(sock, id, login):
 
 def match_finder(event_id):
     sleep(1)
-    number_of_players = len(rooms[event_id])
     while rooms[event_id]:
         try:
             if len(rooms[event_id]) >= amount_of_players_for_event[event_id]:
@@ -248,9 +251,11 @@ def showdown_game(room: list):
             raise ValueError(f'не добавлен бравлер с именем "{brawler_name}"')
     con.close()
 
+    Bull(players_start_cords[-1][0], players_start_cords[-1][1], 'bot_0', brawlers_group, is_bot=True)
+    Shelly(players_start_cords[-2][0], players_start_cords[-2][1], 'bot_1', brawlers_group, is_bot=True)
+
     # send brawlers info to players
     info = {}  # {login: [brawler_name, (x, y), power]}
-    info['bot_0'] = ['bull', (250, 150), 1, 500]
     for brawler in brawlers_group:
         info[brawler.player_name] = [brawler.class_name, (brawler.rect.left, brawler.rect.top),
                                      brawler.power, brawler.health]
@@ -266,7 +271,7 @@ def showdown_game(room: list):
     while running:
 
         # end of game condition
-        if len(brawlers_group) <= 0:
+        if len(brawlers_group) <= 1:
             print('game_ends')
             running = False
             for player in players_alive:
@@ -319,7 +324,6 @@ def showdown_game(room: list):
                         try:
                             first_command = CMD_GAME_attack
                             angle = int(command[1:])
-                            print(angle, 1)
                             if brawlers[players_alive[i]].class_name == 'colt':
                                 brawlers[players_alive[i]].attack(angle, tickrate)
                                 if players_alive[i] not in changes:
@@ -354,7 +358,6 @@ def showdown_game(room: list):
                                     brawlers[players_alive[i]].move(0, -y)
                                     y = 0
                                 if x or y:
-                                    print(brawlers[players_alive[i]].rect.center)
                                     if players_alive[i] not in changes:
                                         changes[players_alive[i]] = {}
                                     changes[players_alive[i]]['move'] = (x, y)
@@ -367,7 +370,6 @@ def showdown_game(room: list):
                                 CMD_GAME_attack):
                             try:
                                 angle = int(command[1:])
-                                print(angle, 2)
                                 if brawlers[players_alive[i]].class_name == 'colt':
                                     brawlers[players_alive[i]].attack(angle, tickrate)
                                     if players_alive[i] not in changes:
@@ -391,14 +393,38 @@ def showdown_game(room: list):
             except BlockingIOError:
                 pass
 
-        for destroyed_skeletons in groupcollide(bullets_group, skeletons_group, False, True).values():
+        for destroyed_skeletons in groupcollide(bullets_group, skeletons_group, False,
+                                                True).values():
             for destroyed_skeleton in destroyed_skeletons:
-                print(destroyed_skeleton)
                 if '__map__' not in changes:
                     changes['__map__'] = []
-                print((destroyed_skeleton.rect.x, destroyed_skeleton.rect.y))
                 changes['__map__'].append((destroyed_skeleton.rect.x, destroyed_skeleton.rect.y))
         groupcollide(bullets_group, walls_group, True, False)
+        for bullet, damaged_players in groupcollide(bullets_group, brawlers_group, False,
+                                                    False).items():
+            for damaged_player in damaged_players:
+                if bullet.owner == damaged_player.player_name:
+                    continue
+                health = damaged_player.get_damage(bullet.damage)
+                bullet.kill()
+                if damaged_player.player_name not in changes:
+                    changes[damaged_player.player_name] = {}
+                if health:
+                    if 'health' not in changes[damaged_player.player_name]:
+                        changes[damaged_player.player_name]['health'] = 0
+                    changes[damaged_player.player_name]['health'] += -1 * bullet.damage
+                else:
+                    changes[damaged_player.player_name]['died'] = len(brawlers_group)
+                    damaged_player.kill()
+                    if not damaged_player.is_bot:
+                        if damaged_player.player_name in players_alive:
+                            players_sockets[damaged_player.player_name].sendall((CMD_GAME_changes + dumps({damaged_player.player_name: {'died': len(brawlers_group)}}) + Delimiter).encode())
+                            print(players_alive)
+                            players_alive.remove(damaged_player.player_name)
+                            print(players_alive)
+                            players_sockets[damaged_player.player_name].setblocking(True)
+                            thr = Thread(target=menu, args=(damaged_player.player_name,))
+                            thr.start()
 
         # sending changes to players
         if changes:
@@ -415,17 +441,12 @@ def showdown_game(room: list):
 
         # tickrate
         clock.tick(tickrate)
-        # print(clock.tick(tickrate))
 
     # end of game
     for player in players_alive:
         players_sockets[player].setblocking(True)
-        try:
-            players_sockets[player].sendall((CMD_GAME_game_ends + '1' + Delimiter).encode())
-        except ConnectionError:
-            print(1)
-            close_connection(player)
-            room.remove(player)
+        thr = Thread(target=menu, args=(player,))
+        thr.start()
 
 
 if __name__ == '__main__':

@@ -12,10 +12,10 @@ try:
                 try:
                     import mainGame
 
-                    run, sock, brawler, screen, place = mainGame.main(sock, extra_message, login)
+                    run, sock, brawler, screen, place, extra_message = mainGame.main(sock, extra_message, login)
                     if not run:
                         break
-                    res, sock, extra_message = mainGame.end(sock, brawler, place, screen)
+                    res, sock, extra_message = mainGame.end(sock, brawler, place, screen, extra_message)
                     if not res:
                         break
                 except ConnectionError:

@@ -545,7 +545,7 @@ def main(sock, login, password):
                           bold=True)
     brawlers_menu_button = Button(20, 250, 200, 64, text='BRAWLERS', r=20, color=pg.Color("Yellow"))
     user_data = get_player_info(sock)
-    user_button.text = user_data['nickname'].encode()
+    user_button.text = user_data['nickname']
     trophies_button.text = '        ' + str(
         sum(map(lambda x: x[0], user_data['brawlers'].values())))
     money_button.text = '         ' + str(user_data['money'])
