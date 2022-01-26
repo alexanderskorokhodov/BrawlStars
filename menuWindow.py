@@ -519,7 +519,7 @@ def search_window(chosen_brawler, chosen_event, sock):
         clock.tick(_fps)
 
 
-def main(sock, login, password):
+def main(sock, login, password, play_again=False):
     running = True
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
@@ -566,6 +566,16 @@ def main(sock, login, password):
                          bold=True)
     pg.mixer.music.load('data/tones/main-menu-2.mp3')
     pg.mixer.music.play(-1)
+    if play_again:
+        try:
+            res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
+                                               chosen_event, sock)
+            if res:
+                return "game", sock, extra_message
+        except ZeroDivisionError:
+            data = False
+            while not data:
+                sock, data = server_error_window(login, password)
     while running:
         brawler.image = pg.transform.scale(
             load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
@@ -590,7 +600,7 @@ def main(sock, login, password):
                 res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
                                                    chosen_event, sock)
                 if res:
-                    return True, sock, extra_message
+                    return "game", sock, extra_message
             except ZeroDivisionError:
                 data = False
                 while not data:

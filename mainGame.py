@@ -1,9 +1,12 @@
 from json import loads
 from math import degrees
 
+import pygame.font
+
 from brawlers import *
 from commands import *
 
+PLACE_FONT = pygame.font.Font('./data/mainFont.ttf', 100)
 FIND_FONT = pygame.font.Font('./data/mainFont.ttf', 50)
 COLOR_DEFAULT = pygame.Color(102, 102, 190)
 MAIN_FONT = pygame.font.Font('./data/mainFont.ttf', 36)
@@ -64,10 +67,11 @@ def draw_additional(player: Brawler, surface: pygame.surface.Surface) -> None:
     x, y, w, h = player.rect.x, player.rect.y - 15, player.rect.width, 10
     pygame.draw.rect(surface, (0, 33, 55), (x, y, w, h), border_radius=3)
     pygame.draw.rect(surface, "red" if is_enemy else "Blue", (x, y, w * min(1, (max(player.current_health, 0) /
-                                                              player.max_health)), h), border_radius=3)
+                                                                                player.max_health)), h),
+                     border_radius=3)
     pygame.draw.rect(surface, (0, 33, 55), (x, y, w, h), border_radius=3, width=1)
     draw_inf(player.rect.x + 25, player.rect.y - 35, nick, surface, 15)
-    draw_inf(player.rect.x + 25, y-2, str(player.current_health), surface, 10)
+    draw_inf(player.rect.x + 25, y - 2, str(player.current_health), surface, 10)
 
 
 def load_image(name, color_key=None):
@@ -444,18 +448,14 @@ def end(sock, brawler_name, place, screen, extra_text):
         bg_sprites.draw(screen)
         back_button.draw(screen, outline=pygame.Color("BLACK"))
         select_button.draw(screen, outline=pygame.Color("BLACK"))
+        draw_outline(50, 50, f"{place + 1} place", screen, PLACE_FONT)
         fg.draw(screen)
         if back_button.is_over(pygame.mouse.get_pos()):
-            res = False
-            running = False
+            return "menu", sock, extra_message
         if select_button.is_over(pygame.mouse.get_pos()):
-            res = True
-            running = False
+            return "play_again", sock, extra_message
         pygame.display.flip()
         clock.tick(fps)
-    if res:
-        res, extra_message = search_window(brawler_name, sock, screen, extra_text=extra_text)
-    return res, sock, extra_message
 
 
 def main(sock, extra_message, login):
@@ -557,7 +557,7 @@ def main(sock, extra_message, login):
 
         # collision
         for bullet, damaged_players in pygame.sprite.groupcollide(bullet_group, player_group, False,
-                                                    False).items():
+                                                                  False).items():
             for damaged_player in damaged_players:
                 if bullet.owner == damaged_player.nick:
                     continue

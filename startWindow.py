@@ -384,11 +384,11 @@ def main():
         sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
         message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
         if message == CMD_RIGHT_PASSWORD:
-            return True, sock, login, password
+            return "menu", sock, login, password
     res, login, password = login_reg_window(sock)
     if res:
         write_credentials(login, password)
-        return True, sock, login, password
+        return "menu", sock, login, password
     return False, None
 
 
