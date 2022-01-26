@@ -429,8 +429,8 @@ def end(sock, brawler_name, place, screen, extra_text):
     back_button = Button(20, 630, 300, 64, text=f'menu', r=20)
     bg_sprites.add(background)
     fps = 30
-    select_button = Button(1080, 630, 400, 64, text='play again', r=20,
-                           sound='data/tones/select_brawler_01.mp3')
+    # select_button = Button(1080, 630, 400, 64, text='play again', r=20,
+    # sound='data/tones/select_brawler_01.mp3')
     brawler = pygame.sprite.Sprite()
     brawler.image = pygame.transform.scale(
         load_image(f"brawlers/inMenu/{brawler_name.lower()}.png"), (450, 500))
@@ -447,13 +447,13 @@ def end(sock, brawler_name, place, screen, extra_text):
         screen.fill((30, 30, 30))
         bg_sprites.draw(screen)
         back_button.draw(screen, outline=pygame.Color("BLACK"))
-        select_button.draw(screen, outline=pygame.Color("BLACK"))
+        # select_button.draw(screen, outline=pygame.Color("BLACK"))
         draw_outline(50, 50, f"{place + 1} place", screen, PLACE_FONT)
         fg.draw(screen)
         if back_button.is_over(pygame.mouse.get_pos()):
             return "menu", sock, extra_message
-        if select_button.is_over(pygame.mouse.get_pos()):
-            return "play_again", sock, extra_message
+        # if select_button.is_over(pygame.mouse.get_pos()):
+        # return "play_again", sock, extra_message
         pygame.display.flip()
         clock.tick(fps)
 

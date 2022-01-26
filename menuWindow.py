@@ -540,7 +540,7 @@ def main(sock, login, password, current_brawler, play_again=False):
                 return "game", sock, extra_message
         except:
             server_error_window(login, password)
-            return "menu", sock, extra_message
+            return "menu", sock, ''
     user_button.text = user_data['nickname']
     trophies_button.text = '        ' + str(
         sum(map(lambda x: x[0], user_data['brawlers'].values())))
