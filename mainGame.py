@@ -8,6 +8,7 @@ FIND_FONT = pygame.font.Font('./data/mainFont.ttf', 50)
 COLOR_DEFAULT = pygame.Color(102, 102, 190)
 MAIN_FONT = pygame.font.Font('./data/mainFont.ttf', 36)
 NICK_FONT = pygame.font.Font('./data/mainFont.ttf', 20)
+HEALTH_FONT = pygame.font.Font('./data/mainFont.ttf', 10)
 size = width, height = 1500, 700
 tile_images = {
     'wall': load_image('maps/tiles/wall.png'),
@@ -43,18 +44,30 @@ def draw_outline(x, y, string, win, font):
     draw_text(x, y, string, 'white', win)
 
 
+def draw_inf(x, y, string, win, size):
+    def draw_text(x_, y_, s, col, window, bold=True):
+        text = font.render(s, bold, col)
+        window.blit(text, (x_ - len(s) * size / 4, y_))
+
+    r = size // 10
+    font = pygame.font.Font('./data/mainFont.ttf', size)
+    draw_text(x - 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y - r + 2, string, 'black', win)
+    draw_text(x + 1, y + r, string, 'black', win)
+    draw_text(x - 1, y + r, string, 'black', win)
+    draw_text(x, y, string, 'white', win)
+
+
 def draw_additional(player: Brawler, surface: pygame.surface.Surface) -> None:
     nick = player.nick
     is_enemy = player.is_enemy
-    pygame.draw.rect(surface, "red" if is_enemy else "Blue",
-                     (player.rect.x - 25, player.rect.y - 25, player.rect.width * 2, 10),
-                     1, border_radius=4)
-    pygame.draw.rect(surface, "red" if is_enemy else "Blue",
-                     (player.rect.x - 25, player.rect.y - 25,
-                      player.rect.width * 2 * max(
-                          player.current_health,
-                          0) / player.max_health, 10), border_radius=4)
-    draw_outline(player.rect.x - 10, player.rect.y - 50, nick, surface, NICK_FONT)
+    x, y, w, h = player.rect.x, player.rect.y - 15, player.rect.width, 10
+    pygame.draw.rect(surface, (0, 33, 55), (x, y, w, h), border_radius=3)
+    pygame.draw.rect(surface, "red" if is_enemy else "Blue", (x, y, w * min(1, (max(player.current_health, 0) /
+                                                              player.max_health)), h), border_radius=3)
+    pygame.draw.rect(surface, (0, 33, 55), (x, y, w, h), border_radius=3, width=1)
+    draw_inf(player.rect.x + 25, player.rect.y - 35, nick, surface, 15)
+    draw_inf(player.rect.x + 25, y-2, str(player.current_health), surface, 10)
 
 
 def load_image(name, color_key=None):
@@ -76,7 +89,7 @@ def load_image(name, color_key=None):
 def load_map(map_name):
     filename = "data/maps/" + map_name
     with open(filename, 'r') as mapFile:
-        _map = [i.strip() for i in mapFile]
+        _map = [list(i.strip()) for i in mapFile]
     return _map
 
 
