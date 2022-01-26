@@ -343,82 +343,7 @@ def send_move(sock):
     sock.sendall((CMD_GAME_move + str(type_of_move) + Delimiter).encode())
 
 
-def search_window(chosen_brawler, sock, screen, extra_text=''):
-    def get_player_info(sock):
-        message = extra_text + sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
-        while Delimiter not in message:
-            message += sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
-        if message == CMD_PLAYER_INFO_IN_MENU:
-            data = sock.recv(32).decode()
-            while data[-1] != Delimiter:
-                data += sock.recv(32).decode()
-            info = loads(data[:-1])
-            return info
-        else:
-            print(message)
-
-    print(get_player_info(sock), 1)  # we don't use in, it is for skipping extra commands
-    chosen_brawler_id = bs[chosen_brawler.title()]
-    sock.sendall((CMD_FIND_MATCH + '0' + str(chosen_brawler_id // 10) + str(
-        chosen_brawler_id % 10) + Delimiter).encode())
-    running = True
-    bg = pygame.sprite.Group()
-    fg = pygame.sprite.Group()
-    img = pygame.sprite.Sprite()
-    img.image = load_image("load_in_game.png")
-    img.rect = img.image.get_rect()
-    img.rect.x, img.rect.y = 650, 250
-    background = pygame.sprite.Sprite()
-    background.image = load_image("menu.jpg")
-    background.rect = background.image.get_rect(center=(width // 2, height // 2))
-    bg.add(background)
-    fg.add(img)
-    radius = (180, 130)
-    xd = width // 2
-    yd = height // 2
-    angle = 0
-    _fps = 60
-    clock = pygame.time.Clock()
-    players = ''
-    message = ''
-    sock.setblocking(False)
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-
-        if players and players.split('/')[0] == players.split('/')[1]:
-            if message:
-                return True, message
-            return True, ''
-        try:
-            message += sock.recv(16).decode()
-        except BlockingIOError:
-            pass
-        if Delimiter in message:
-            players = message.split(Delimiter)[0]
-            message = Delimiter.join(message.split(Delimiter)[1:])
-            players = players[len(CMD_PLAYERS_IN_ROOM):]
-
-        screen.fill((30, 30, 30))
-        bg.draw(screen)
-        angle -= 2
-        points = [(xd + cos(radians(angle + i * 30)) * (radius[i % 2] + 16),
-                   yd - sin(radians(angle + i * 30)) * (radius[i % 2] + 16)) for i in range(12)]
-        pygame.draw.polygon(screen, color='black', points=points)
-        points = [(xd + cos(radians(angle + i * 30)) * radius[i % 2],
-                   yd - sin(radians(angle + i * 30)) * radius[i % 2])
-                  for i in range(12)]
-        pygame.draw.polygon(screen, color=(251, 196, 8), points=points)
-        fg.draw(screen)
-        draw_outline(470, 20, "SEARCHING FOR PLAYERS", screen, FIND_FONT)
-        draw_outline(520, 90, f"PLAYERS FOUND {players}", screen, FIND_FONT)
-        pygame.display.flip()
-        clock.tick(_fps)
-    return False, ''
-
-
-def end(sock, brawler_name, place, screen, extra_text):
+def end(sock, brawler_name, place, screen):
     running = True
     global ev
     clock = pygame.time.Clock()
@@ -437,7 +362,6 @@ def end(sock, brawler_name, place, screen, extra_text):
     brawler.rect = brawler.image.get_rect()
     brawler.rect.x, brawler.rect.y = 500, 100
     fg = pygame.sprite.Group()
-    extra_message = ''
     fg.add(brawler)
     while running:
         ev = pygame.event.get()
@@ -451,9 +375,9 @@ def end(sock, brawler_name, place, screen, extra_text):
         draw_outline(50, 50, f"{place + 1} place", screen, PLACE_FONT)
         fg.draw(screen)
         if back_button.is_over(pygame.mouse.get_pos()):
-            return "menu", sock, extra_message
+            return "menu", sock
         if select_button.is_over(pygame.mouse.get_pos()):
-            return "play_again", sock, extra_message
+            return "play_again", sock
         pygame.display.flip()
         clock.tick(fps)
 

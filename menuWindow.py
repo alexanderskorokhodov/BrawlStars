@@ -9,14 +9,17 @@ import pygame as pg
 from commands import *  # commands
 
 
-def get_player_info(sock):
-    message = sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
-    if message == CMD_PLAYER_INFO_IN_MENU:
-        data = sock.recv(32).decode()
-        while data[-1] != Delimiter:
-            data += sock.recv(32).decode()
-        info = loads(data[:-1])
+def get_player_info(sock, extra_text=''):
+    message = extra_text + sock.recv(len(CMD_PLAYER_INFO_IN_MENU)).decode()
+    if message.startswith(CMD_PLAYER_INFO_IN_MENU):
+        message += sock.recv(32).decode()
+        print(message)
+        while message[-1] != Delimiter:
+            message += sock.recv(32).decode()
+        info = loads(message[len(CMD_PLAYER_INFO_IN_MENU):-1])
         return info
+    else:
+        print(message)
 
 
 pg.init()
@@ -278,46 +281,6 @@ def load_image(name, color_key=None):
     return image
 
 
-def server_error_window(login, password):
-    running = True
-    try_button = Button(600, 300, 300, 64, text='Try again', color=COLOR_DEFAULT, r=16)
-    all_sprites = pg.sprite.Group()
-    background = pg.sprite.Sprite()
-    background.image = load_image(f"serverError1.jpg")
-    background.rect = background.image.get_rect(center=(width // 2, height // 2))
-    all_sprites.add(background)
-    text_server_error = MAIN_FONT.render("Error: Cannot connect to server", True, (255, 0, 0))
-    data = False
-    sock = None
-    while running:
-        global ev
-        ev = pg.event.get()
-        for event in ev:
-            if event.type == pg.QUIT:
-                quit()
-        screen.fill((30, 30, 30))
-        all_sprites.draw(screen)
-        try_button.draw(screen, True)
-        screen.blit(text_server_error, (500, 400, 300, 32))
-        if try_button.is_over(pg.mouse.get_pos()):
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                server_address = (socket.gethostbyname(socket.gethostname()), 10000)
-                print('Подключено к {} порт {}'.format(*server_address))
-                sock.connect(server_address)
-                sock.sendall((CMD_TO_LOG_IN + login + Delimiter + password).encode())
-                message = sock.recv(max(len(CMD_RIGHT_PASSWORD), len(CMD_WRONG_PASSWORD))).decode()
-                if message != CMD_RIGHT_PASSWORD:
-                    raise
-                data = get_player_info(sock)
-                running = False
-            except:
-                running = True
-        pg.display.flip()
-        clock.tick(fps)
-    return sock, data
-
-
 def upgrade(brawler):
     return brawler
 
@@ -519,7 +482,7 @@ def search_window(chosen_brawler, chosen_event, sock):
         clock.tick(_fps)
 
 
-def main(sock, login, password, play_again=False):
+def main(sock, play_again=False, extra_text=''):
     running = True
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
@@ -544,7 +507,7 @@ def main(sock, login, password, play_again=False):
                           color=pg.Color("Black"),
                           bold=True)
     brawlers_menu_button = Button(20, 250, 200, 64, text='BRAWLERS', r=20, color=pg.Color("Yellow"))
-    user_data = get_player_info(sock)
+    user_data = get_player_info(sock, extra_text=extra_text)
     user_button.text = user_data['nickname']
     trophies_button.text = '        ' + str(
         sum(map(lambda x: x[0], user_data['brawlers'].values())))
@@ -567,15 +530,10 @@ def main(sock, login, password, play_again=False):
     pg.mixer.music.load('data/tones/main-menu-2.mp3')
     pg.mixer.music.play(-1)
     if play_again:
-        try:
-            res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
-                                               chosen_event, sock)
-            if res:
-                return "game", sock, extra_message
-        except ZeroDivisionError:
-            data = False
-            while not data:
-                sock, data = server_error_window(login, password)
+        res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
+                                           chosen_event, sock)
+        if res:
+            return "game", sock, extra_message
     while running:
         brawler.image = pg.transform.scale(
             load_image(f"brawlers/inMenu/{current_brawler.lower()}.png"), (450, 450))
@@ -596,15 +554,10 @@ def main(sock, login, password, play_again=False):
         fg_sprites.draw(screen)
         pg.display.flip()
         if play_button.is_over(pg.mouse.get_pos()):
-            try:
-                res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
-                                                   chosen_event, sock)
-                if res:
-                    return "game", sock, extra_message
-            except ZeroDivisionError:
-                data = False
-                while not data:
-                    sock, data = server_error_window(login, password)
+            res, extra_message = search_window(user_data['brawlers'][current_brawler][-1],
+                                               chosen_event, sock)
+            if res:
+                return "game", sock, extra_message
         if brawlers_menu_button.is_over(pg.mouse.get_pos()):
             chosen_brawler = brawlers_menu(user_data)
             if chosen_brawler:
