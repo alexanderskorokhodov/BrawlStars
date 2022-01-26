@@ -510,7 +510,7 @@ def search_window(chosen_brawler, chosen_event, sock):
         clock.tick(_fps)
 
 
-def main(sock, login, password, current_brawler, play_again=False, extra_text=''):
+def main(sock, current_brawler, play_again=False, extra_text=''):
     running = True
     bg_sprites = pg.sprite.Group()
     background = pg.sprite.Sprite()
